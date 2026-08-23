@@ -1,0 +1,61 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Page not found" description="This page is outside the lifecycle wheel." noindex>
+  <section class="not-found">
+    <p>404</p>
+    <h1>Out of the loop.</h1>
+    <a href="/">Return to the wheel</a>
+  </section>
+</BaseLayout>
+
+<style>
+.not-found {
+  display: grid;
+  min-height: 100svh;
+  place-content: center;
+  gap: var(--space-md);
+  padding: var(--space-xl) max(var(--page-gutter), env(safe-area-inset-right)) var(--space-xl)
+    max(var(--page-gutter), env(safe-area-inset-left));
+  text-align: center;
+}
+
+.not-found > p {
+  color: var(--coral);
+  font-size: clamp(5rem, 24vw, 12rem);
+  font-weight: var(--font-weight-bold);
+  line-height: 0.7;
+  letter-spacing: -0.08em;
+}
+
+h1 {
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+}
+
+a {
+  display: inline-flex;
+  min-height: var(--control-size);
+  align-items: center;
+  justify-self: center;
+  padding-inline: var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+a:hover {
+  border-color: var(--coral);
+  color: var(--ink-soft);
+}
+</style>

@@ -1,0 +1,122 @@
+---
+import ThemeToggle from "./ThemeToggle.astro";
+---
+
+<header class="site-header">
+  <a class="site-header__brand" href="/" aria-label="SDLC Guide home">
+    <span class="site-header__name">SDLC Guide</span>
+    <span class="site-header__separator" aria-hidden="true"></span>
+    <span class="site-header__tagline">the software development life cycle, in the age of AI</span>
+  </a>
+
+  <div class="site-header__actions">
+    <nav class="site-header__navigation" aria-label="Primary navigation">
+      <a class="site-header__library" href="/library/">The library →</a>
+    </nav>
+    <ThemeToggle />
+  </div>
+</header>
+
+<style>
+.site-header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  width: min(100%, var(--container-shell));
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(var(--space-xs), 2vw, var(--space-md));
+  margin-inline: auto;
+  padding: max(var(--space-md), env(safe-area-inset-top))
+    max(var(--page-gutter), env(safe-area-inset-right)) 0
+    max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+.site-header__brand {
+  display: inline-flex;
+  min-width: 0;
+  min-height: var(--control-size);
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--ink);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.site-header__name {
+  flex: 0 0 auto;
+  font-family: var(--font-brand);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  white-space: nowrap;
+}
+
+.site-header__separator {
+  width: 1px;
+  height: var(--space-md);
+  flex: 0 0 auto;
+  background: var(--line);
+}
+
+.site-header__tagline {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: 0.01em;
+  line-height: var(--line-height-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-header__actions,
+.site-header__navigation {
+  display: flex;
+  align-items: center;
+}
+
+.site-header__actions {
+  flex: 0 0 auto;
+  gap: clamp(var(--space-xs), 2vw, var(--space-lg));
+}
+
+.site-header__library {
+  display: inline-flex;
+  min-height: var(--control-size);
+  align-items: center;
+  color: var(--ink);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.site-header__brand:hover,
+.site-header__library:hover {
+  color: var(--ink-soft);
+}
+
+@media (max-width: 26rem) {
+  .site-header__brand {
+    flex: 0 1 auto;
+    gap: var(--space-xs);
+  }
+
+  .site-header__separator,
+  .site-header__tagline {
+    display: none;
+  }
+
+  .site-header__actions {
+    gap: var(--space-xs);
+  }
+
+  .site-header__library {
+    font-size: var(--font-size-xs);
+  }
+}
+</style>

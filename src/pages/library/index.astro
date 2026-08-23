@@ -1,0 +1,21 @@
+---
+import LibraryView from "../../components/LibraryView.astro";
+import SiteHeader from "../../components/SiteHeader.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="The library"
+  description="Browse the software lifecycle documents, phase by phase."
+>
+  <div class="library-page">
+    <SiteHeader />
+    <LibraryView />
+  </div>
+</BaseLayout>
+
+<style>
+.library-page {
+  min-height: 100svh;
+}
+</style>

@@ -1,0 +1,31 @@
+{
+  "name": "sdlc-guide",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check && biome check .",
+    "format": "biome check --write .",
+    "build": "astro check && astro build",
+    "preview": "WRANGLER_LOG_PATH=/tmp/sdlc-guide-wrangler.log wrangler dev --port 8787",
+    "verify": "bun run check && bun run build && WRANGLER_LOG_PATH=/tmp/sdlc-guide-wrangler.log wrangler deploy --dry-run",
+    "deploy:dry-run": "bun run build && WRANGLER_LOG_PATH=/tmp/sdlc-guide-wrangler.log wrangler deploy --dry-run",
+    "deploy": "bun run build && WRANGLER_LOG_PATH=/tmp/sdlc-guide-wrangler.log wrangler deploy"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "3.7.3",
+    "astro": "7.2.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@biomejs/biome": "2.5.10",
+    "@types/node": "24.13.3",
+    "typescript": "6.0.3",
+    "wrangler": "4.125.0"
+  }
+}

@@ -1,0 +1,80 @@
+<button class="theme-toggle" type="button" data-theme-toggle hidden>
+  <span class="theme-toggle__glyph" aria-hidden="true"></span>
+</button>
+
+<script>
+const toggle = document.querySelector<HTMLButtonElement>("[data-theme-toggle]");
+const themeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+
+function currentTheme(): "light" | "dark" {
+  const theme = document.documentElement.dataset.theme;
+  if (theme === "light" || theme === "dark") return theme;
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function syncToggle(): void {
+  if (!toggle) return;
+  const theme = currentTheme();
+  const next = theme === "dark" ? "light" : "dark";
+  toggle.ariaPressed = String(theme === "dark");
+  toggle.ariaLabel = `Switch to ${next} theme`;
+  toggle.title = `Switch to ${next} theme`;
+  themeMeta?.setAttribute("content", theme === "dark" ? "#211226" : "#fff3dc");
+}
+
+if (toggle) {
+  syncToggle();
+  toggle.hidden = false;
+  toggle.addEventListener("click", () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try {
+      localStorage.setItem("sdlc-theme", next);
+    } catch {}
+    syncToggle();
+  });
+}
+</script>
+
+<style>
+.theme-toggle {
+  display: inline-flex;
+  min-height: var(--control-size);
+  min-width: var(--control-size);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
+}
+
+.theme-toggle[hidden] {
+  display: none;
+}
+
+.theme-toggle__glyph {
+  width: var(--space-md);
+  aspect-ratio: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: linear-gradient(90deg, currentColor 0 50%, transparent 50% 100%);
+  transform: rotate(0deg);
+  transition: transform var(--duration-medium) var(--ease-out);
+}
+
+:global(:root[data-theme="dark"]) .theme-toggle__glyph {
+  transform: rotate(180deg);
+}
+
+@media (hover: hover) {
+  .theme-toggle:hover {
+    opacity: 0.72;
+  }
+}
+</style>

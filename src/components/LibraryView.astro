@@ -1,0 +1,270 @@
+---
+import { lifecycleDocuments, lifecyclePhases } from "../data/lifecycle";
+
+const liveGuideCount = Object.values(lifecycleDocuments).filter((document) => document.live).length;
+const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
+---
+
+<section class="library-view" aria-labelledby="library-title">
+  <div class="library-view__topline">
+    <nav class="library-view__breadcrumbs" aria-label="Breadcrumb">
+      <a href="/">The wheel</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">The library</span>
+    </nav>
+    <p class="library-view__count">{liveGuideLabel}</p>
+  </div>
+
+  <header class="library-view__intro">
+    <h1 id="library-title">The library</h1>
+    <p>
+      The lifecycle&apos;s documents, phase by phase. PRD, RFC, and ADR are live — the rest of the
+      wheel: coming soon…
+    </p>
+  </header>
+
+  <ul class="library-view__grid" aria-label="Lifecycle guides by phase">
+    {lifecyclePhases.map((phase) => (
+      <li>
+        <article class="library-view__phase" style={`--phase-color: var(${phase.colorVariable})`}>
+          <h2 class="library-view__phase-label">
+            <span class="library-view__phase-marker" aria-hidden="true"></span>
+            <span>{String(phase.index).padStart(2, "0")}</span>
+            <span>{phase.name}</span>
+          </h2>
+
+          {phase.documents.length > 0 ? (
+            <ul class="library-view__guide-list">
+              {phase.documents.map((documentId) => {
+                const document = lifecycleDocuments[documentId];
+
+                return (
+                  <li>
+                    {document.live ? (
+                      <a
+                        href={document.path}
+                        aria-label={`Read ${document.abbreviation}: ${document.name}`}
+                      >
+                        <span>{document.abbreviation}</span>
+                        <span class="library-view__guide-action" aria-hidden="true">read →</span>
+                      </a>
+                    ) : (
+                      <span class="library-view__guide library-view__guide--soon">
+                        <span>{document.abbreviation}</span>
+                        <span>coming soon…</span>
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p class="library-view__empty">coming soon…</p>
+          )}
+        </article>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+.library-view {
+  width: min(100%, var(--container-wide));
+  min-width: 0;
+  margin-inline: auto;
+  padding: 0 max(var(--page-gutter), env(safe-area-inset-right))
+    clamp(var(--space-3xl), 8vw, var(--space-4xl))
+    max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+.library-view__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs) var(--space-md);
+  flex-wrap: wrap;
+  padding-block-start: clamp(var(--space-md), 3vw, var(--space-lg));
+}
+
+.library-view__breadcrumbs {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.library-view__breadcrumbs a {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.library-view__breadcrumbs a:hover {
+  color: var(--ink);
+}
+
+.library-view__breadcrumbs > span[aria-hidden] {
+  opacity: 0.5;
+}
+
+.library-view__breadcrumbs > span[aria-current] {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+}
+
+.library-view__count {
+  color: var(--ink-soft);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+  white-space: nowrap;
+}
+
+.library-view__intro {
+  max-width: 40rem;
+  padding-block: clamp(var(--space-lg), 4vw, var(--space-xl)) var(--space-lg);
+}
+
+.library-view__intro h1 {
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+}
+
+.library-view__intro p {
+  margin-block-start: var(--space-sm);
+  color: var(--ink-soft);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
+.library-view__grid,
+.library-view__guide-list {
+  padding: 0;
+  list-style: none;
+}
+
+.library-view__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-md);
+}
+
+.library-view__phase {
+  --phase-color: var(--line);
+  display: grid;
+  min-height: 9rem;
+  align-content: start;
+  padding: var(--space-md);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.library-view__phase-label {
+  display: flex;
+  min-block-size: var(--font-size-lg);
+  align-items: center;
+  gap: var(--space-xs);
+  margin-block-end: var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+  text-transform: uppercase;
+}
+
+.library-view__phase-marker {
+  width: var(--space-xs);
+  height: 0.2rem;
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill);
+  background: var(--phase-color);
+}
+
+.library-view__guide-list {
+  display: grid;
+}
+
+.library-view__guide-list li + li > * {
+  border-block-start: 1px solid color-mix(in oklch, var(--line) 55%, transparent);
+}
+
+.library-view__guide-list li:first-child > * {
+  border-block-start: 1px solid color-mix(in oklch, var(--line) 55%, transparent);
+}
+
+.library-view__guide-list a,
+.library-view__guide,
+.library-view__empty {
+  display: flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  color: var(--ink);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-label);
+}
+
+.library-view__guide-list a {
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.library-view__guide-list a:hover {
+  color: var(--ink-soft);
+}
+
+.library-view__guide-action {
+  flex: 0 0 auto;
+  color: var(--phase-color);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.library-view__guide--soon,
+.library-view__empty {
+  color: var(--ink-soft);
+  font-weight: var(--font-weight-regular);
+  opacity: 0.78;
+}
+
+.library-view__guide--soon {
+  border-block-start: 1px solid color-mix(in oklch, var(--line) 55%, transparent);
+}
+
+.library-view__guide--soon > span:last-child {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.library-view__empty {
+  border-block-start: 1px solid color-mix(in oklch, var(--line) 55%, transparent);
+}
+
+@media (max-width: 26rem) {
+  .library-view__topline {
+    align-items: flex-start;
+  }
+
+  .library-view__count {
+    min-block-size: var(--control-size);
+    padding-block: 0;
+  }
+
+  .library-view__phase {
+    min-height: 0;
+  }
+}
+</style>

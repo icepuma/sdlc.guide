@@ -1,0 +1,349 @@
+---
+import { type Guide, guideById } from "../data/guides";
+
+interface Props {
+  guide: Guide;
+}
+
+const { guide } = Astro.props;
+const phaseName = guide.phase === "plan" ? "Planning" : "Design";
+const wheelHref = `/${guide.phaseHash}`;
+const guidePath = (item: Guide) => `/${item.phase}/${item.id}/`;
+const introSection = guide.sections.find((section) => section.kind === "intro");
+const whenSection = guide.sections.find((section) => section.kind === "when");
+const anatomySection = guide.sections.find((section) => section.kind === "anatomy");
+const exampleSection = guide.sections.find((section) => section.kind === "example");
+const dosSection = guide.sections.find((section) => section.kind === "dos");
+const relatedSection = guide.sections.find((section) => section.kind === "related");
+const templateSection = guide.sections.find((section) => section.kind === "template");
+const factLeads = ["Also called", "Written by", "Ideal length", "Shelf life"] as const;
+const quickFacts = guide.meta
+  .map((fact, index) => `${factLeads[index] ?? fact.label}: ${fact.value}`)
+  .join(". ");
+---
+
+<article class="guide-article" style={`--guide-color: var(${guide.colorVariable})`}>
+  <div class="guide-article__pretitle">
+    <nav aria-label="Breadcrumb">
+      <a href={wheelHref}>← {phaseName} on the wheel</a>
+    </nav>
+    <p>
+      <strong>{guide.abbreviation}</strong>
+      <span>Guide {guide.index} / 03</span>
+    </p>
+  </div>
+
+  <header class="guide-article__header">
+    <h1>{guide.name}</h1>
+    <p class="guide-article__tagline">{guide.tagline}</p>
+  </header>
+
+  {introSection?.kind === "intro" &&
+    whenSection?.kind === "when" &&
+    anatomySection?.kind === "anatomy" &&
+    dosSection?.kind === "dos" &&
+    relatedSection?.kind === "related" && (
+    <section class="guide-block" id={introSection.id} aria-labelledby="summary-title">
+      <header class="guide-block__heading">
+        <span aria-hidden="true">01</span>
+        <h2 id="summary-title">Summary</h2>
+      </header>
+
+      <div class="guide-summary">
+        <p>
+          <strong>At a glance.</strong> {quickFacts}.
+        </p>
+        {templateSection?.kind === "template" && (
+          <p id={templateSection.id}>
+            <strong>Template.</strong> {templateSection.note}{" "}
+            <a href={templateSection.templatePath} download={templateSection.fileName}>
+              Download {templateSection.fileName} ↓
+            </a>
+          </p>
+        )}
+        {introSection.paragraphs.map((paragraph) => (
+          <p>{paragraph}</p>
+        ))}
+        <p><strong>In short.</strong> {introSection.pullQuote}</p>
+        <p id={whenSection.id}>
+          <strong>Use it when.</strong> {whenSection.reachForItWhen.join("; ")}.
+        </p>
+        <p>
+          <strong>Skip it when.</strong> {whenSection.skipItWhen.join("; ")}.
+        </p>
+        <p id={anatomySection.id}>
+          <strong>What it contains.</strong> {
+            anatomySection.items
+              .map((item) => `${item.term}: ${item.description}`)
+              .join(" ")
+          }
+        </p>
+        <p id={dosSection.id}>
+          <strong>Write it well.</strong> {dosSection.dos.join("; ")}. <strong>Avoid.</strong> {
+            dosSection.donts.join("; ")
+          }.
+        </p>
+        <p id={relatedSection.id}>
+          <strong>Related.</strong>{" "}
+          {relatedSection.guides.map((related, index) => {
+            const relatedGuide = guideById[related.guideId];
+
+            return (
+              <span>
+                {index > 0 && " "}
+                <a href={guidePath(relatedGuide)}>{related.abbreviation}</a>
+                {` — ${related.description}`}
+              </span>
+            );
+          })}
+        </p>
+        <p>
+          <strong>Sources.</strong>{" "}
+          {guide.sources.map((source, index) => (
+            <span>
+              {index > 0 && " · "}
+              <a href={source.url}>{source.label}</a>
+            </span>
+          ))}
+        </p>
+      </div>
+    </section>
+  )}
+
+  {exampleSection?.kind === "example" && (
+    <section class="guide-block" id={exampleSection.id} aria-labelledby="example-title">
+      <header class="guide-block__heading">
+        <span aria-hidden="true">02</span>
+        <h2 id="example-title">Full example</h2>
+      </header>
+
+      <article class="guide-example" aria-label={`Example: ${exampleSection.documentTitle}`}>
+        <header class="guide-example__bar">
+          <span>{exampleSection.fileName}</span>
+          <span>Complete document</span>
+        </header>
+        <div class="guide-example__document">
+          <h3>{exampleSection.documentTitle}</h3>
+          <p class="guide-example__meta">{exampleSection.documentMeta}</p>
+          {exampleSection.entries.map((entry) => (
+            <section>
+              <h4>{entry.heading}</h4>
+              <p>{entry.text}</p>
+              {entry.items && (
+                <ul>
+                  {entry.items.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))}
+        </div>
+      </article>
+    </section>
+  )}
+</article>
+
+<style>
+.guide-article {
+  width: min(100%, var(--container-reading));
+  min-width: 0;
+  margin-inline: auto;
+  padding: 0 max(var(--page-gutter), env(safe-area-inset-right))
+    clamp(var(--space-2xl), 6vw, var(--space-3xl))
+    max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+.guide-article__pretitle a,
+.guide-summary a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.guide-article__pretitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs) var(--space-md);
+  flex-wrap: wrap;
+  padding-block-start: clamp(var(--space-md), 3vw, var(--space-lg));
+}
+
+.guide-article__pretitle a {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.guide-article__pretitle a:hover {
+  color: var(--ink);
+}
+
+.guide-article__pretitle p {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+  text-transform: uppercase;
+}
+
+.guide-article__pretitle strong {
+  color: var(--guide-color);
+  font-weight: var(--font-weight-bold);
+}
+
+.guide-article__header {
+  padding-block: clamp(var(--space-sm), 2vw, var(--space-lg))
+    clamp(var(--space-lg), 4vw, var(--space-xl));
+}
+
+.guide-article__header h1 {
+  max-width: 42rem;
+  margin: 0;
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+}
+
+.guide-article__tagline {
+  margin-block-start: var(--space-md);
+  color: var(--ink-soft);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-body);
+}
+
+.guide-block {
+  scroll-margin-block-start: var(--space-lg);
+  margin-block-end: clamp(var(--space-2xl), 8vw, var(--space-4xl));
+}
+
+.guide-block:last-child {
+  margin-block-end: 0;
+}
+
+.guide-block__heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin-block-end: var(--space-lg);
+  padding-block-end: var(--space-sm);
+  border-block-end: 1px solid var(--line);
+}
+
+.guide-block__heading > span {
+  color: var(--guide-color);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-label);
+}
+
+.guide-block__heading h2 {
+  font-size: var(--font-size-section);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-heading);
+  line-height: var(--line-height-tight);
+}
+
+.guide-summary {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.guide-summary > p {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+  scroll-margin-block-start: var(--space-lg);
+}
+
+.guide-summary strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+.guide-summary a {
+  color: var(--guide-color);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.guide-example {
+  border-block: 1px solid var(--line);
+  background: color-mix(in oklch, var(--surface) 72%, transparent);
+}
+
+.guide-example__bar {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-block-end: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-label);
+}
+
+.guide-example__bar > span:last-child {
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.guide-example__document {
+  padding: clamp(var(--space-md), 3vw, var(--space-lg));
+}
+
+.guide-example__document h3 {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-heading);
+  line-height: var(--line-height-tight);
+}
+
+.guide-example__meta {
+  margin-block: var(--space-2xs) var(--space-lg);
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-label);
+}
+
+.guide-example__document section + section {
+  margin-block-start: var(--space-lg);
+}
+
+.guide-example__document h4 {
+  margin: 0 0 var(--space-2xs);
+  color: var(--guide-color);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+  text-transform: uppercase;
+}
+
+.guide-example__document section p {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
+.guide-example__document section ul {
+  display: grid;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0 0;
+  padding-inline-start: var(--space-lg);
+}
+
+.guide-example__document section li {
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+</style>

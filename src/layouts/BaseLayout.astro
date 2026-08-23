@@ -1,0 +1,64 @@
+---
+import { Font } from "astro:assets";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+}
+
+const { title, description, noindex = false } = Astro.props;
+const siteName = "sdlc.guide";
+const fullTitle = title === siteName ? title : `${title} · ${siteName}`;
+const siteBase = Astro.site ?? new URL(Astro.url.origin);
+const canonical = new URL(Astro.url.pathname, siteBase);
+const socialImage = new URL("/og-image.svg", siteBase);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <Font cssVariable="--font-readable" preload />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description}>
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#fff3dc">
+    <link rel="canonical" href={canonical}>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="sitemap" href="/sitemap-index.xml">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content={siteName}>
+    <meta property="og:title" content={fullTitle}>
+    <meta property="og:description" content={description}>
+    <meta property="og:url" content={canonical}>
+    <meta property="og:image" content={socialImage}>
+    <meta name="twitter:card" content="summary_large_image">
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <script is:inline>
+    (() => {
+      let stored = null;
+      try {
+        stored = localStorage.getItem("sdlc-theme");
+      } catch {}
+      const theme =
+        stored === "light" || stored === "dark"
+          ? stored
+          : matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+      document.documentElement.dataset.theme = theme;
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", theme === "dark" ? "#211226" : "#fff3dc");
+    })();
+    </script>
+  </head>
+  <body>
+    <main id="main-content" tabindex="-1">
+      <slot />
+    </main>
+  </body>
+</html>

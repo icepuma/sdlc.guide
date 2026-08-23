@@ -1,0 +1,983 @@
+---
+import { type LifecycleDocumentId, lifecycleDocuments, lifecyclePhases } from "../data/lifecycle";
+
+const step = 360 / lifecyclePhases.length;
+const format = (value: number) => value.toFixed(2);
+const degreesPerRadian = 180 / Math.PI;
+const segmentCornerRadius = 1.1;
+const segmentGapWidth = 1.7;
+const segmentOutlineWidth = 0.15;
+const phaseLabelFontSize = 1.8;
+const documentLabelFontSize = 1.5;
+const labelTracking = 0;
+const labelWeight = 700;
+const mainRing = {
+  outerRadius: 36.6,
+  innerRadius: 24.3,
+  tipAngle: 6.8,
+  seamExtension: 1.6,
+} as const;
+const mainRingMiddleRadius = (mainRing.innerRadius + mainRing.outerRadius) / 2;
+const documentRing = {
+  innerRadius: mainRing.outerRadius + segmentGapWidth,
+  outerRadius: 43.9,
+  cornerRadius: segmentCornerRadius,
+} as const;
+const documentHitRing = {
+  innerRadius: documentRing.innerRadius - 1.5,
+  outerRadius: documentRing.outerRadius + 1.5,
+  cornerRadius: segmentCornerRadius,
+} as const;
+const documentRingMiddleRadius = (documentRing.innerRadius + documentRing.outerRadius) / 2;
+const documentGapHalfAngle = (segmentGapWidth / 2 / documentRingMiddleRadius) * degreesPerRadian;
+const documentLabelInsetAngle =
+  (documentRing.cornerRadius / documentRingMiddleRadius) * degreesPerRadian;
+
+type Point = { x: number; y: number };
+type Glyph = { character: string; transform: string; x: string; y: string };
+type AnnularRing = { innerRadius: number; outerRadius: number; cornerRadius: number };
+
+function pointOnCircle(angle: number, radius: number): Point {
+  const radians = (angle * Math.PI) / 180;
+  return {
+    x: 50 + radius * Math.sin(radians),
+    y: 50 - radius * Math.cos(radians),
+  };
+}
+
+function pointText(point: Point): string {
+  return `${format(point.x)} ${format(point.y)}`;
+}
+
+function arrowSegmentPath(
+  center: number,
+  sweep: number,
+  outerRadius: number,
+  innerRadius: number,
+  tip: number,
+): string {
+  const middleRadius = (outerRadius + innerRadius) / 2;
+  const start = center - sweep / 2;
+  const end = center + sweep / 2;
+  const points = [
+    pointOnCircle(start, outerRadius),
+    pointOnCircle(end, outerRadius),
+    pointOnCircle(end + tip, middleRadius),
+    pointOnCircle(end, innerRadius),
+    pointOnCircle(start, innerRadius),
+    pointOnCircle(start + tip, middleRadius),
+  ];
+
+  return [
+    `M ${pointText(points[0] ?? { x: 0, y: 0 })}`,
+    `A ${outerRadius} ${outerRadius} 0 0 1 ${pointText(points[1] ?? { x: 0, y: 0 })}`,
+    `L ${pointText(points[2] ?? { x: 0, y: 0 })}`,
+    `L ${pointText(points[3] ?? { x: 0, y: 0 })}`,
+    `A ${innerRadius} ${innerRadius} 0 0 0 ${pointText(points[4] ?? { x: 0, y: 0 })}`,
+    `L ${pointText(points[5] ?? { x: 0, y: 0 })}`,
+    "Z",
+  ].join(" ");
+}
+
+function segmentPath(center: number): string {
+  return arrowSegmentPath(
+    center,
+    step,
+    mainRing.outerRadius,
+    mainRing.innerRadius,
+    mainRing.tipAngle,
+  );
+}
+
+function along(from: Point, to: Point, distance: number): Point {
+  const x = to.x - from.x;
+  const y = to.y - from.y;
+  const length = Math.hypot(x, y);
+  return { x: from.x + (x / length) * distance, y: from.y + (y / length) * distance };
+}
+
+function chevronSeamPath(
+  boundary: number,
+  outerRadius: number,
+  innerRadius: number,
+  tipAngle: number,
+  extension: number,
+): string {
+  const outer = pointOnCircle(boundary, outerRadius);
+  const inner = pointOnCircle(boundary, innerRadius);
+  const tip = pointOnCircle(boundary + tipAngle, (outerRadius + innerRadius) / 2);
+  const outerLength = Math.hypot(outer.x - tip.x, outer.y - tip.y);
+  const innerLength = Math.hypot(inner.x - tip.x, inner.y - tip.y);
+  const outerExtended = along(tip, outer, outerLength + extension);
+  const innerExtended = along(tip, inner, innerLength + extension);
+  return `M ${pointText(outerExtended)} L ${pointText(tip)} L ${pointText(innerExtended)}`;
+}
+
+function seamPath(boundary: number): string {
+  return chevronSeamPath(
+    boundary,
+    mainRing.outerRadius,
+    mainRing.innerRadius,
+    mainRing.tipAngle,
+    mainRing.seamExtension,
+  );
+}
+
+function documentLabelPath(startAngle: number, endAngle: number, reverse: boolean): string {
+  const start = pointOnCircle(reverse ? endAngle : startAngle, documentRingMiddleRadius);
+  const end = pointOnCircle(reverse ? startAngle : endAngle, documentRingMiddleRadius);
+  const sweep = reverse ? 0 : 1;
+  return [
+    `M ${pointText(start)}`,
+    `A ${format(documentRingMiddleRadius)} ${format(documentRingMiddleRadius)} 0 0 ${sweep} ${pointText(end)}`,
+  ].join(" ");
+}
+
+function roundedAnnularSectorPath(
+  startAngle: number,
+  endAngle: number,
+  ring: AnnularRing = documentRing,
+): string {
+  const { innerRadius: inner, outerRadius: outer, cornerRadius: corner } = ring;
+  const outerCornerAngle = Math.asin(corner / (outer - corner)) * degreesPerRadian;
+  const innerCornerAngle = Math.asin(corner / (inner + corner)) * degreesPerRadian;
+  const outerRadialTangent = Math.sqrt((outer - corner) ** 2 - corner ** 2);
+  const innerRadialTangent = Math.sqrt((inner + corner) ** 2 - corner ** 2);
+  const outerStart = pointOnCircle(startAngle + outerCornerAngle, outer);
+  const outerEnd = pointOnCircle(endAngle - outerCornerAngle, outer);
+  const outerEndRadial = pointOnCircle(endAngle, outerRadialTangent);
+  const innerEndRadial = pointOnCircle(endAngle, innerRadialTangent);
+  const innerEnd = pointOnCircle(endAngle - innerCornerAngle, inner);
+  const innerStart = pointOnCircle(startAngle + innerCornerAngle, inner);
+  const innerStartRadial = pointOnCircle(startAngle, innerRadialTangent);
+  const outerStartRadial = pointOnCircle(startAngle, outerRadialTangent);
+
+  return [
+    `M ${pointText(outerStart)}`,
+    `A ${format(outer)} ${format(outer)} 0 0 1 ${pointText(outerEnd)}`,
+    `A ${corner} ${corner} 0 0 1 ${pointText(outerEndRadial)}`,
+    `L ${pointText(innerEndRadial)}`,
+    `A ${corner} ${corner} 0 0 1 ${pointText(innerEnd)}`,
+    `A ${format(inner)} ${format(inner)} 0 0 0 ${pointText(innerStart)}`,
+    `A ${corner} ${corner} 0 0 1 ${pointText(innerStartRadial)}`,
+    `L ${pointText(outerStartRadial)}`,
+    `A ${corner} ${corner} 0 0 1 ${pointText(outerStart)}`,
+    "Z",
+  ].join(" ");
+}
+
+function labelGlyphs(center: number, name: string): Glyph[] {
+  const adjustedCenter = center + 3.4;
+  const normalized = ((adjustedCenter % 360) + 360) % 360;
+  const flip = normalized > 93 && normalized < 267;
+  const characters = name.toUpperCase().split("");
+  const fontSize = phaseLabelFontSize;
+  const radius = flip ? 31.2 : 29.7;
+  const advance = ((fontSize * 0.82 + labelTracking) / radius) * degreesPerRadian;
+  const span = characters.length * advance;
+
+  return characters.map((character, index) => {
+    const angle = flip
+      ? adjustedCenter + span / 2 - (index + 0.5) * advance
+      : adjustedCenter - span / 2 + (index + 0.5) * advance;
+    const point = pointOnCircle(angle, radius);
+    const rotation = flip ? angle + 180 : angle;
+    return {
+      character,
+      x: format(point.x),
+      y: format(point.y),
+      transform: `rotate(${format(rotation)} ${format(point.x)} ${format(point.y)})`,
+    };
+  });
+}
+
+const phases = lifecyclePhases.map((phase, index) => {
+  const angle = index * step;
+  const segment = segmentPath(angle);
+  const labelPoint = pointOnCircle(angle + 3.4, mainRingMiddleRadius);
+  const documentIds = phase.documents as readonly LifecycleDocumentId[];
+  const documents = documentIds.map((id) => lifecycleDocuments[id]);
+  return {
+    ...phase,
+    angle,
+    segment,
+    seam: seamPath(angle + step / 2),
+    glyphs: labelGlyphs(angle, phase.name),
+    labelPoint,
+    documents,
+  };
+});
+
+const documentGroups = phases.map((phase) => {
+  const items = phase.documents.length
+    ? phase.documents.map((document) => ({
+        id: document.id,
+        label: document.abbreviation,
+        href: document.path,
+        placeholder: false,
+      }))
+    : [
+        {
+          id: `${phase.id}-soon`,
+          label: "COMING SOON",
+          href: "",
+          placeholder: true,
+        },
+      ];
+  const segmentSweep = step / items.length;
+  const firstStart = phase.angle - step / 2;
+  const segments = items.map((item, index) => {
+    const slotStartAngle = firstStart + index * segmentSweep;
+    const slotEndAngle = slotStartAngle + segmentSweep;
+    const startAngle = slotStartAngle + documentGapHalfAngle;
+    const endAngle = slotEndAngle - documentGapHalfAngle;
+    const middleAngle = (startAngle + endAngle) / 2;
+    const normalized = ((middleAngle % 360) + 360) % 360;
+    const reverseLabel = normalized > 90 && normalized < 270;
+    const labelStart = startAngle + documentLabelInsetAngle;
+    const labelEnd = endAngle - documentLabelInsetAngle;
+    return {
+      ...item,
+      parentPhase: phase.id,
+      shape: roundedAnnularSectorPath(startAngle, endAngle),
+      hitShape: roundedAnnularSectorPath(startAngle, endAngle, documentHitRing),
+      labelPath: documentLabelPath(labelStart, labelEnd, reverseLabel),
+      labelPathId: `document-label-${phase.id}-${item.id}`,
+      colorVariable: phase.colorVariable,
+    };
+  });
+  return { phaseId: phase.id, segments };
+});
+
+const initialPhase = phases.find((phase) => phase.id === "plan");
+if (!initialPhase) throw new Error("Planning phase is required");
+---
+
+<section class="wheel-stage" aria-labelledby="lifecycle-title">
+  <h1 class="screen-reader-only" id="lifecycle-title">Software development lifecycle</h1>
+  <div
+    class="wheel"
+    data-wheel
+    style={`--selected-color: var(${initialPhase.colorVariable}); --wheel-gap-width: ${segmentGapWidth}; --wheel-outline-width: ${segmentOutlineWidth}; --wheel-phase-label-size: ${phaseLabelFontSize}px; --wheel-document-label-size: ${documentLabelFontSize}px; --wheel-label-tracking: ${labelTracking}px; --wheel-label-weight: ${labelWeight}`}
+  >
+    <div class="wheel__halo" aria-hidden="true"></div>
+    <nav class="wheel__sculpture" aria-label="Lifecycle guides">
+      <div class="wheel__art">
+        <svg class="wheel__ring" viewBox="0 0 100 100">
+          <title>Lifecycle wheel</title>
+          <defs>
+            <mask
+              id="lifecycle-seams"
+              maskUnits="userSpaceOnUse"
+              x="-10"
+              y="-10"
+              width="120"
+              height="120"
+            >
+              <rect x="-10" y="-10" width="120" height="120" fill="white"></rect>
+              {phases.map((phase) => (
+                <path class="wheel__mask-seam" d={phase.seam}></path>
+              ))}
+            </mask>
+            <filter
+              id="selected-inner-edge"
+              filterUnits="userSpaceOnUse"
+              primitiveUnits="userSpaceOnUse"
+              x="-10"
+              y="-10"
+              width="120"
+              height="120"
+              color-interpolation-filters="sRGB"
+            >
+              <feMorphology
+                in="SourceAlpha"
+                operator="erode"
+                radius="0.5"
+                result="eroded"
+              ></feMorphology>
+              <feComposite in="SourceGraphic" in2="eroded" operator="out"></feComposite>
+            </filter>
+            <filter
+              id="focus-inner-edge"
+              filterUnits="userSpaceOnUse"
+              primitiveUnits="userSpaceOnUse"
+              x="-10"
+              y="-10"
+              width="120"
+              height="120"
+              color-interpolation-filters="sRGB"
+            >
+              <feMorphology
+                in="SourceAlpha"
+                operator="erode"
+                radius="0.9"
+                result="eroded"
+              ></feMorphology>
+              <feComposite in="SourceGraphic" in2="eroded" operator="out"></feComposite>
+            </filter>
+          </defs>
+          {documentGroups.map((group) => (
+            <g
+              id={`phase-${group.phaseId}-guides`}
+              class="wheel__document-group"
+              data-document-group
+              data-parent-phase={group.phaseId}
+            >
+              {group.segments.map((document) =>
+                document.placeholder ? (
+                  <g
+                    class="wheel__document-segment is-placeholder"
+                    style={`--document-color: var(${document.colorVariable})`}
+                  >
+                    <path class="wheel__document-shape" d={document.shape}></path>
+                    <path
+                      class="wheel__document-label-path"
+                      id={document.labelPathId}
+                      d={document.labelPath}
+                    ></path>
+                    <text>
+                      <textPath href={`#${document.labelPathId}`} startOffset="50%">
+                        {document.label}
+                      </textPath>
+                    </text>
+                  </g>
+                ) : (
+                  <a
+                    class="wheel__document-segment"
+                    href={document.href}
+                    tabindex="-1"
+                    aria-label={`Open the ${document.label} guide`}
+                    data-document-link
+                    style={`--document-color: var(${document.colorVariable})`}
+                  >
+                    <path class="wheel__document-shape" d={document.shape}></path>
+                    <path class="wheel__document-hit" d={document.hitShape}></path>
+                    <path
+                      class="wheel__document-label-path"
+                      id={document.labelPathId}
+                      d={document.labelPath}
+                    ></path>
+                    <text>
+                      <textPath href={`#${document.labelPathId}`} startOffset="50%">
+                        {document.label}
+                      </textPath>
+                    </text>
+                  </a>
+                ),
+              )}
+            </g>
+          ))}
+          <g mask="url(#lifecycle-seams)" aria-hidden="true">
+            {phases.map((phase) => (
+              <path
+                class:list={["wheel__segment", { "is-selected": phase.id === initialPhase.id }]}
+                d={phase.segment}
+                data-phase-segment={phase.id}
+                style={`--phase-color: var(${phase.colorVariable})`}
+              ></path>
+            ))}
+          </g>
+          <g
+            class="wheel__edge-layer wheel__edge-layer--selected"
+            filter="url(#selected-inner-edge)"
+            aria-hidden="true"
+          >
+            <g mask="url(#lifecycle-seams)">
+              {phases.map((phase) => (
+                <path
+                  class:list={[
+                    "wheel__edge-source",
+                    { "is-selected": phase.id === initialPhase.id },
+                  ]}
+                  d={phase.segment}
+                  data-phase-selected-edge={phase.id}
+                ></path>
+              ))}
+            </g>
+          </g>
+          <g
+            class="wheel__edge-layer wheel__edge-layer--focus"
+            filter="url(#focus-inner-edge)"
+            aria-hidden="true"
+          >
+            <g mask="url(#lifecycle-seams)">
+              {phases.map((phase) => (
+                <path
+                  class="wheel__edge-source"
+                  d={phase.segment}
+                  data-phase-focus-edge={phase.id}
+                ></path>
+              ))}
+            </g>
+          </g>
+          <g aria-hidden="true">
+            {phases.map((phase) => (
+              <g
+                class:list={["wheel__label", { "is-selected": phase.id === initialPhase.id }]}
+                data-phase-label={phase.id}
+              >
+                {phase.glyphs.map((glyph) => (
+                  <text
+                    x={glyph.x}
+                    y={glyph.y}
+                    transform={glyph.transform}
+                    focusable="false"
+                  >
+                    {glyph.character}
+                  </text>
+                ))}
+              </g>
+            ))}
+          </g>
+        </svg>
+      </div>
+    </nav>
+
+    <div class="wheel__controls" aria-describedby="wheel-flow-description">
+      <p class="screen-reader-only" id="wheel-flow-description">
+        The lifecycle flows clockwise from Requirements through Maintenance and back to
+        Requirements. Use the arrow keys to move between phases.
+      </p>
+      {phases.map((phase) => {
+        const isSelected = phase.id === initialPhase.id;
+        const availability = phase.documents.length
+          ? `Guides: ${phase.documents.map((document) => document.abbreviation).join(" and ")}`
+          : "Guides coming soon";
+        return (
+          <div
+            class="wheel__control-position"
+            role="presentation"
+            style={`--label-x: ${format(phase.labelPoint.x)}%; --label-y: ${format(phase.labelPoint.y)}%`}
+          >
+            <button
+              id={`phase-${phase.id}`}
+              class="phase-control"
+              type="button"
+              aria-expanded="false"
+              aria-controls={`phase-${phase.id}-guides`}
+              aria-label={`${phase.index} of 7, ${phase.name}. ${availability}. ${phase.summary}`}
+              tabindex={isSelected ? 0 : -1}
+              data-phase-control
+              data-phase-id={phase.id}
+              data-color={`var(${phase.colorVariable})`}
+              data-order={`${String(phase.index).padStart(2, "0")} / 07`}
+              data-name={phase.name}
+              data-status={`${phase.name}. ${availability}.`}
+            ></button>
+          </div>
+        );
+      })}
+    </div>
+
+    <div class="wheel__center" id="wheel-panel" aria-live="polite" aria-atomic="true">
+      <p class="wheel__counter">
+        <span data-phase-order>{`${String(initialPhase.index).padStart(2, "0")} / 07`}</span>
+      </p>
+      <h2 id="wheel-heading" data-phase-name>{initialPhase.name}</h2>
+      <p class="screen-reader-only" data-phase-status>
+        {`${initialPhase.name}. Guides: ${initialPhase.documents.map((document) => document.abbreviation).join(" and ")}.`}
+      </p>
+    </div>
+  </div>
+
+  <noscript>
+    <style is:inline>
+    [data-wheel] {
+      display: none;
+    }
+    .wheel-stage {
+      display: block;
+      min-height: 0;
+    }
+    </style>
+    <div class="wheel-fallback">
+      <h2>Software development lifecycle</h2>
+      <ol>
+        {phases.map((phase) => (
+          <li>
+            <strong>{phase.name}</strong>
+            <span>{phase.summary}</span>
+            {phase.documents.length ? (
+              <span class="wheel-fallback__links">
+                {phase.documents.map((document) => (
+                  <a href={document.path}>{document.abbreviation}</a>
+                ))}
+              </span>
+            ) : (
+              <small>Coming soon…</small>
+            )}
+          </li>
+        ))}
+      </ol>
+      <a href="/library/">Browse the library →</a>
+    </div>
+  </noscript>
+</section>
+
+<script>
+const wheel = document.querySelector<HTMLElement>("[data-wheel]");
+const sculpture = wheel?.querySelector<HTMLElement>(".wheel__sculpture");
+if (wheel && sculpture) wheel.append(sculpture);
+const controls = Array.from(
+  wheel?.querySelectorAll<HTMLButtonElement>("[data-phase-control]") ?? [],
+);
+const segments = new Map(
+  Array.from(wheel?.querySelectorAll<SVGPathElement>("[data-phase-segment]") ?? []).map(
+    (segment) => [segment.dataset.phaseSegment ?? "", segment],
+  ),
+);
+const selectedEdges = new Map(
+  Array.from(wheel?.querySelectorAll<SVGPathElement>("[data-phase-selected-edge]") ?? []).map(
+    (edge) => [edge.dataset.phaseSelectedEdge ?? "", edge],
+  ),
+);
+const focusEdges = new Map(
+  Array.from(wheel?.querySelectorAll<SVGPathElement>("[data-phase-focus-edge]") ?? []).map(
+    (edge) => [edge.dataset.phaseFocusEdge ?? "", edge],
+  ),
+);
+const labels = new Map(
+  Array.from(wheel?.querySelectorAll<SVGGElement>("[data-phase-label]") ?? []).map((label) => [
+    label.dataset.phaseLabel ?? "",
+    label,
+  ]),
+);
+const documentGroupNodes = Array.from(
+  wheel?.querySelectorAll<SVGGElement>("[data-document-group]") ?? [],
+);
+const documentLinkNodes = Array.from(
+  wheel?.querySelectorAll<SVGAElement>("[data-document-link]") ?? [],
+);
+const order = wheel?.querySelector<HTMLElement>("[data-phase-order]");
+const name = wheel?.querySelector<HTMLElement>("[data-phase-name]");
+const status = wheel?.querySelector<HTMLElement>("[data-phase-status]");
+let keyboardFocus = false;
+
+window.addEventListener(
+  "keydown",
+  () => {
+    keyboardFocus = true;
+  },
+  { capture: true },
+);
+
+for (const link of documentLinkNodes) {
+  link.addEventListener("focus", () => {
+    link.classList.toggle("is-keyboard-focused", keyboardFocus);
+  });
+  link.addEventListener("blur", () => {
+    link.classList.remove("is-keyboard-focused");
+  });
+  link.addEventListener("pointerdown", () => {
+    link.classList.remove("is-keyboard-focused");
+  });
+}
+window.addEventListener(
+  "pointerdown",
+  () => {
+    keyboardFocus = false;
+  },
+  { capture: true },
+);
+
+function replaceHash(phaseId: string): void {
+  history.replaceState(null, "", `#${phaseId}`);
+}
+
+function previewPhase(phaseId: string, active: boolean): void {
+  segments.get(phaseId)?.classList.toggle("is-preview", active);
+  labels.get(phaseId)?.classList.toggle("is-preview", active);
+}
+
+function focusPhase(phaseId: string, active: boolean): void {
+  focusEdges.get(phaseId)?.classList.toggle("is-focused", active);
+}
+
+function selectPhase(
+  control: HTMLButtonElement,
+  moveFocus = false,
+  updateHash = true,
+  revealDocuments = true,
+): void {
+  for (const candidate of controls) {
+    const selected = candidate === control;
+    const id = candidate.dataset.phaseId ?? "";
+    candidate.setAttribute("aria-expanded", String(selected && revealDocuments));
+    candidate.tabIndex = selected ? 0 : -1;
+    segments.get(id)?.classList.toggle("is-selected", selected);
+    selectedEdges.get(id)?.classList.toggle("is-selected", selected);
+    labels.get(id)?.classList.toggle("is-selected", selected);
+  }
+
+  for (const documentGroup of documentGroupNodes) {
+    const visible =
+      revealDocuments && documentGroup.dataset.parentPhase === control.dataset.phaseId;
+    documentGroup.classList.toggle("is-visible", visible);
+    documentGroup.setAttribute("aria-hidden", String(!visible));
+    for (const link of documentGroup.querySelectorAll<SVGAElement>("[data-document-link]")) {
+      link.setAttribute("tabindex", visible ? "0" : "-1");
+    }
+  }
+
+  wheel?.style.setProperty("--selected-color", control.dataset.color ?? "var(--phase-plan)");
+  if (order) order.textContent = control.dataset.order ?? "";
+  if (name) name.textContent = control.dataset.name ?? "";
+  if (status) status.textContent = control.dataset.status ?? "";
+
+  if (updateHash && control.dataset.phaseId) replaceHash(control.dataset.phaseId);
+  if (moveFocus) control.focus();
+}
+
+controls.forEach((control, index) => {
+  control.addEventListener("click", () => selectPhase(control));
+  control.addEventListener("pointerenter", () => previewPhase(control.dataset.phaseId ?? "", true));
+  control.addEventListener("pointerleave", () =>
+    previewPhase(control.dataset.phaseId ?? "", false),
+  );
+  control.addEventListener("focus", () => focusPhase(control.dataset.phaseId ?? "", keyboardFocus));
+  control.addEventListener("blur", () => focusPhase(control.dataset.phaseId ?? "", false));
+  control.addEventListener("keydown", (event) => {
+    const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
+    const backward = event.key === "ArrowLeft" || event.key === "ArrowUp";
+    const home = event.key === "Home";
+    const end = event.key === "End";
+    if (!forward && !backward && !home && !end) return;
+
+    event.preventDefault();
+    let nextIndex = index;
+    if (home) nextIndex = 0;
+    else if (end) nextIndex = controls.length - 1;
+    else nextIndex = (index + (forward ? 1 : -1) + controls.length) % controls.length;
+    const next = controls[nextIndex];
+    if (next) selectPhase(next, true);
+  });
+});
+
+for (const [phaseId, segment] of segments) {
+  segment.addEventListener("pointerenter", () => previewPhase(phaseId, true));
+  segment.addEventListener("pointerleave", () => previewPhase(phaseId, false));
+  segment.addEventListener("click", () => {
+    const control = controls.find((candidate) => candidate.dataset.phaseId === phaseId);
+    if (control) selectPhase(control);
+  });
+}
+
+function applyHash(): void {
+  const phaseId = location.hash.slice(1);
+  const control = controls.find((candidate) => candidate.dataset.phaseId === phaseId);
+  if (control) {
+    selectPhase(control, false, false, true);
+    return;
+  }
+
+  const initial = controls.find((candidate) => candidate.tabIndex === 0);
+  if (initial) selectPhase(initial, false, false, false);
+}
+
+applyHash();
+window.addEventListener("hashchange", applyHash);
+</script>
+
+<style>
+.wheel-stage {
+  display: grid;
+  width: 100%;
+  min-height: calc(100svh - 4.75rem);
+  place-items: center;
+  padding: clamp(var(--space-sm), 2vmin, var(--space-md))
+    max(var(--page-gutter), env(safe-area-inset-right))
+    clamp(var(--space-sm), 2vmin, var(--space-md))
+    max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+.wheel {
+  --wheel-size: clamp(17.5rem, min(87vw, calc(100svh - 9rem)), 46rem);
+  --wheel-hit-size: clamp(var(--control-size), 13cqw, 4.75rem);
+  --wheel-hub-gap: clamp(0.35rem, 0.8cqw, 0.55rem);
+  --wheel-hub-number-size: clamp(0.56rem, 1.45cqw, 0.72rem);
+  --wheel-hub-padding: clamp(0.5rem, 2.4cqw, 1.15rem);
+  --wheel-hub-title-size: clamp(1.3rem, 6.3cqw, 3.15rem);
+  --wheel-muted-opacity: 0.68;
+  --wheel-state-duration: var(--duration-medium);
+  --wheel-hover-duration: var(--duration-fast);
+  position: relative;
+  display: grid;
+  width: min(100%, var(--wheel-size));
+  aspect-ratio: 1;
+  place-items: center;
+  isolation: isolate;
+  container-name: lifecycle-wheel;
+  container-type: inline-size;
+}
+
+.wheel__halo {
+  position: absolute;
+  z-index: -2;
+  inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--selected-color) 18%, transparent) 0,
+    color-mix(in oklch, var(--selected-color) 6%, transparent) 42%,
+    transparent 70%
+  );
+  transform: scale(1.38);
+  transition: background var(--wheel-state-duration) var(--ease-out);
+}
+
+.wheel__sculpture,
+.wheel__art,
+.wheel__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.wheel__sculpture {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.wheel__ring {
+  overflow: visible;
+}
+
+.wheel__document-group {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--wheel-hover-duration) var(--ease-out),
+    visibility 0s linear var(--wheel-hover-duration);
+}
+
+.wheel__document-group.is-visible {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.wheel__document-segment:not(.is-placeholder) {
+  cursor: pointer;
+  outline: none;
+  pointer-events: auto;
+}
+
+.wheel__document-segment.is-placeholder {
+  cursor: default;
+  pointer-events: none;
+}
+
+.wheel__document-shape {
+  fill: var(--document-color);
+  stroke: none;
+  pointer-events: visiblePainted;
+  shape-rendering: geometricPrecision;
+  transition: fill var(--wheel-hover-duration) var(--ease-out);
+}
+
+.wheel__document-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: fill;
+}
+
+.wheel__document-segment:not(.is-placeholder):hover .wheel__document-shape {
+  fill: color-mix(in oklch, var(--document-color) 88%, var(--ink));
+}
+
+.wheel__document-segment.is-keyboard-focused .wheel__document-shape {
+  stroke: var(--phase-focus);
+  stroke-width: 0.45;
+}
+
+.wheel__document-label-path {
+  fill: none;
+  stroke: none;
+  pointer-events: none;
+}
+
+.wheel__document-segment text {
+  fill: var(--phase-ink);
+  font-size: var(--wheel-document-label-size);
+  font-weight: var(--wheel-label-weight);
+  letter-spacing: var(--wheel-label-tracking);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.wheel__mask-seam {
+  fill: none;
+  stroke: black;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: var(--wheel-gap-width);
+}
+
+.wheel__edge-layer,
+.wheel__edge-source {
+  pointer-events: none;
+}
+
+.wheel__edge-source {
+  stroke-linejoin: round;
+  stroke-width: var(--wheel-outline-width);
+  opacity: 0;
+  shape-rendering: geometricPrecision;
+  transition: opacity var(--wheel-state-duration) var(--ease-out);
+}
+
+.wheel__edge-layer--selected .wheel__edge-source {
+  fill: var(--phase-ink);
+  stroke: var(--phase-ink);
+}
+
+.wheel__edge-layer--focus .wheel__edge-source {
+  fill: var(--phase-focus);
+  stroke: var(--phase-focus);
+}
+
+.wheel__edge-source.is-selected,
+.wheel__edge-source.is-focused {
+  opacity: 1;
+}
+
+.wheel__segment {
+  fill: color-mix(in oklch, var(--phase-color) 70%, var(--background));
+  stroke: color-mix(in oklch, var(--phase-color) 70%, var(--background));
+  stroke-linejoin: round;
+  stroke-width: var(--wheel-outline-width);
+  cursor: pointer;
+  pointer-events: visiblePainted;
+  transition:
+    fill var(--wheel-state-duration) var(--ease-out),
+    stroke var(--wheel-state-duration) var(--ease-out);
+}
+
+.wheel__segment:not(.is-selected):hover,
+.wheel__segment.is-preview:not(.is-selected) {
+  fill: color-mix(in oklch, var(--phase-color) 88%, var(--background));
+  stroke: color-mix(in oklch, var(--phase-color) 88%, var(--background));
+}
+
+.wheel__segment.is-selected {
+  fill: var(--phase-color);
+  stroke: var(--phase-color);
+}
+
+.wheel__label {
+  opacity: var(--wheel-muted-opacity);
+  pointer-events: none;
+  transition: opacity var(--wheel-state-duration) var(--ease-out);
+}
+
+.wheel__label.is-selected,
+.wheel__label.is-preview {
+  opacity: 1;
+}
+
+.wheel__label text {
+  fill: var(--phase-ink);
+  font-size: var(--wheel-phase-label-size);
+  font-weight: var(--wheel-label-weight);
+  text-anchor: middle;
+}
+
+.wheel__controls {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wheel__control-position {
+  position: absolute;
+  inset-block-start: var(--label-y);
+  inset-inline-start: var(--label-x);
+  width: 0;
+  height: 0;
+}
+
+.phase-control {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: var(--wheel-hit-size);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+}
+
+.phase-control:focus-visible {
+  outline: none;
+}
+
+.wheel__center {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 47%;
+  aspect-ratio: 1;
+  align-content: center;
+  gap: var(--wheel-hub-gap);
+  padding: var(--wheel-hub-padding);
+  border-radius: 50%;
+  text-align: center;
+}
+
+.wheel__counter {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--wheel-hub-number-size);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+}
+
+.wheel__center h2 {
+  margin: 0;
+  font-size: var(--wheel-hub-title-size);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.wheel-fallback {
+  width: min(100%, var(--container-reading));
+  padding: var(--space-xl) 0;
+}
+
+.wheel-fallback h2 {
+  margin-block-end: var(--space-lg);
+}
+
+.wheel-fallback ol {
+  display: grid;
+  gap: var(--space-md);
+  padding: 0;
+  list-style: none;
+}
+
+.wheel-fallback li {
+  display: grid;
+  gap: var(--space-2xs);
+  padding-block: var(--space-sm);
+  border-block-end: 1px solid var(--line);
+}
+
+.wheel-fallback span,
+.wheel-fallback small {
+  color: var(--ink-soft);
+}
+
+.wheel-fallback__links {
+  display: flex;
+  gap: var(--space-md);
+}
+</style>

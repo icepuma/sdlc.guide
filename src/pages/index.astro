@@ -1,0 +1,24 @@
+---
+import LifecycleWheel from "../components/LifecycleWheel.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="sdlc.guide"
+  description="The software development lifecycle, its documents, and the decisions that connect them."
+>
+  <div class="home-page">
+    <SiteHeader />
+    <LifecycleWheel />
+  </div>
+</BaseLayout>
+
+<style>
+.home-page {
+  display: grid;
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+}
+</style>
