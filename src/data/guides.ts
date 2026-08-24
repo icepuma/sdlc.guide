@@ -16,7 +16,6 @@ type GuideSource = {
 
 type GuideSectionBase = {
   readonly id: string;
-  readonly number: string;
   readonly title: string;
 };
 
@@ -35,7 +34,6 @@ type WhenSection = GuideSectionBase & {
 type AnatomySection = GuideSectionBase & {
   readonly kind: "anatomy";
   readonly items: readonly {
-    readonly number: string;
     readonly term: string;
     readonly description: string;
   }[];
@@ -87,13 +85,11 @@ export type GuideSection =
 
 export type Guide = {
   readonly id: GuideId;
-  readonly index: string;
   readonly abbreviation: string;
   readonly name: string;
   readonly phase: GuidePhaseId;
   readonly phaseHash: `#${GuidePhaseId}`;
   readonly colorVariable: GuideColorVariable;
-  readonly counter: string;
   readonly summary: string;
   readonly tagline: string;
   readonly templatePath: TemplatePath;
@@ -105,13 +101,11 @@ export type Guide = {
 export const guides = [
   {
     id: "prd",
-    index: "01",
     abbreviation: "PRD",
     name: "Product requirements document",
     phase: "plan",
     phaseHash: "#plan",
     colorVariable: "--phase-plan",
-    counter: "GUIDE 01 / 03 · PHASE 02 PLANNING",
     summary: "Makes product intent, scope, behavior, and success measures reviewable.",
     tagline: "A shared statement of the user problem, intended outcome, and evidence of success.",
     templatePath: "/templates/prd-template.md",
@@ -139,7 +133,6 @@ export const guides = [
       {
         kind: "intro",
         id: "what",
-        number: "01",
         title: "What & why",
         paragraphs: [
           "A product requirements document makes a product decision reviewable. It states the user problem and evidence, the intended outcome, scope boundaries, and the product behavior the team must provide.",
@@ -151,7 +144,6 @@ export const guides = [
       {
         kind: "when",
         id: "when",
-        number: "02",
         title: "When to write one",
         reachForItWhen: [
           "A product or feature needs shared intent across disciplines",
@@ -168,52 +160,43 @@ export const guides = [
       {
         kind: "anatomy",
         id: "anatomy",
-        number: "03",
         title: "Anatomy",
         items: [
           {
-            number: "3.1",
             term: "Problem & evidence",
             description: "Who is affected, what happens now, and the evidence behind the claim.",
           },
           {
-            number: "3.2",
             term: "Outcome & scope",
             description:
               "The intended result, what is in scope, and what is out of scope for this release.",
           },
           {
-            number: "3.3",
             term: "Users, scenarios & links",
             description:
               "The user, need, goal, and links to research, flows, prototypes, or designs.",
           },
           {
-            number: "3.4",
             term: "Requirements",
             description:
               "Uniquely identified, traceable, observable behavior with acceptance criteria.",
           },
           {
-            number: "3.5",
             term: "Success measures",
             description:
               "Baseline, target, data source, owner, and review point defined before delivery.",
           },
           {
-            number: "3.6",
             term: "Assumptions & dependencies",
             description:
               "Constraints, risks, dependencies, owners, and how each item will be validated.",
           },
           {
-            number: "3.7",
             term: "Delivery plan",
             description:
               "The main checkpoints and links to delivery work, without duplicating the backlog.",
           },
           {
-            number: "3.8",
             term: "Open questions",
             description:
               "Research or decisions still needed, each with an owner and decision date.",
@@ -223,7 +206,6 @@ export const guides = [
       {
         kind: "example",
         id: "wild",
-        number: "04",
         title: "In the wild",
         fileName: "prd-guest-checkout.md",
         documentTitle: "PRD · Guest checkout",
@@ -310,7 +292,6 @@ export const guides = [
       {
         kind: "dos",
         id: "dodont",
-        number: "05",
         title: "Do's & don'ts",
         dos: [
           "Write it with product, design, engineering, research, and affected partners",
@@ -330,7 +311,6 @@ export const guides = [
       {
         kind: "related",
         id: "rel",
-        number: "06",
         title: "Plays well with",
         guides: [
           {
@@ -352,7 +332,6 @@ export const guides = [
       {
         kind: "template",
         id: "tpl",
-        number: "07",
         title: "Steal the template",
         fileName: "prd-template.md",
         templatePath: "/templates/prd-template.md",
@@ -362,13 +341,11 @@ export const guides = [
   },
   {
     id: "rfc",
-    index: "02",
     abbreviation: "RFC",
     name: "Request for comments",
     phase: "design",
     phaseHash: "#design",
     colorVariable: "--phase-design",
-    counter: "GUIDE 02 / 03 · PHASE 03 DESIGN",
     summary:
       "Turns a substantial technical change into a reviewable proposal before implementation.",
     tagline: "A proposal written early enough that review can still change the approach.",
@@ -397,7 +374,6 @@ export const guides = [
       {
         kind: "intro",
         id: "what",
-        number: "01",
         title: "What & why",
         paragraphs: [
           "This guide uses RFC in the internal engineering sense, not the IETF or RFC Editor series. It is a written proposal for a substantial technical change, shared early enough that review can still alter the design before the team commits to implementation.",
@@ -408,7 +384,6 @@ export const guides = [
       {
         kind: "when",
         id: "when",
-        number: "02",
         title: "When to write one",
         reachForItWhen: [
           "A public or cross-team contract will change",
@@ -426,58 +401,48 @@ export const guides = [
       {
         kind: "anatomy",
         id: "anatomy",
-        number: "03",
         title: "Anatomy",
         items: [
           {
-            number: "3.1",
             term: "Metadata & decision owner",
             description:
               "Status, owner, decision authority, required reviewers, review window, and related work.",
           },
           {
-            number: "3.2",
             term: "Summary",
             description:
               "One short paragraph with the problem, recommendation, main trade-off, and decision requested.",
           },
           {
-            number: "3.3",
             term: "Context, goals & non-goals",
             description:
               "Evidence, users, constraints, desired result, and scope without assuming one answer.",
           },
           {
-            number: "3.4",
             term: "Proposed design",
             description:
               "Behavior, interfaces, data, failure modes, compatibility, and enough detail to review.",
           },
           {
-            number: "3.5",
             term: "Alternatives & prior art",
             description:
               "Viable options, the status quo, relevant precedent, and why they are not preferred.",
           },
           {
-            number: "3.6",
             term: "Risks & mitigations",
             description:
               "Drawbacks and relevant security, privacy, reliability, performance, cost, or operational risk.",
           },
           {
-            number: "3.7",
             term: "Rollout & operation",
             description:
               "When relevant: migration, testing, enablement, observability, ownership, and rollback.",
           },
           {
-            number: "3.8",
             term: "Open questions",
             description: "Questions that must be answered before a decision, each with an owner.",
           },
           {
-            number: "3.9",
             term: "Decision outcome",
             description:
               "Accepted, rejected, withdrawn, or postponed; rationale, date, dissent, and follow-up links.",
@@ -487,7 +452,6 @@ export const guides = [
       {
         kind: "example",
         id: "wild",
-        number: "04",
         title: "In the wild",
         fileName: "rfc-042-webhooks.md",
         documentTitle: "RFC-042 · Accept signed webhooks for partner event ingestion",
@@ -575,7 +539,6 @@ export const guides = [
       {
         kind: "dos",
         id: "dodont",
-        number: "05",
         title: "Do's & don'ts",
         dos: [
           "Name the decision owner, affected reviewers, review window, and outcome needed",
@@ -595,7 +558,6 @@ export const guides = [
       {
         kind: "related",
         id: "rel",
-        number: "06",
         title: "Plays well with",
         guides: [
           {
@@ -617,7 +579,6 @@ export const guides = [
       {
         kind: "template",
         id: "tpl",
-        number: "07",
         title: "Steal the template",
         fileName: "rfc-template.md",
         templatePath: "/templates/rfc-template.md",
@@ -627,13 +588,11 @@ export const guides = [
   },
   {
     id: "adr",
-    index: "03",
     abbreviation: "ADR",
     name: "Architecture decision record",
     phase: "design",
     phaseHash: "#design",
     colorVariable: "--phase-design",
-    counter: "GUIDE 03 / 03 · PHASE 03 DESIGN",
     summary:
       "Records one architecturally significant decision, its context, status, and consequences.",
     tagline: "A short record of why the system is this way, for the people who change it next.",
@@ -665,7 +624,6 @@ export const guides = [
       {
         kind: "intro",
         id: "what",
-        number: "01",
         title: "What & why",
         paragraphs: [
           "An architecture decision record captures one architecturally significant choice: the facts and forces behind it, its status, the decision, and the consequences. The collection of ADRs forms the decision log; one ADR is not itself the log.",
@@ -676,7 +634,6 @@ export const guides = [
       {
         kind: "when",
         id: "when",
-        number: "02",
         title: "When to write one",
         reachForItWhen: [
           "A choice affects system structure, quality attributes, dependencies, or interfaces",
@@ -693,45 +650,37 @@ export const guides = [
       {
         kind: "anatomy",
         id: "anatomy",
-        number: "03",
         title: "Anatomy",
         items: [
           {
-            number: "3.1",
             term: "Number & title",
             description: "A stable ID and short title that names the decision.",
           },
           {
-            number: "3.2",
             term: "Status & ownership",
             description:
               "Proposed, accepted, rejected, deprecated, or superseded; date, owner, and deciders.",
           },
           {
-            number: "3.3",
             term: "Context",
             description:
               "Factual technical, product, project, and social forces that make a decision necessary.",
           },
           {
-            number: "3.4",
             term: "Options considered",
             description:
               "Viable choices and the status quo when they are needed to understand the outcome.",
           },
           {
-            number: "3.5",
             term: "Decision",
             description: "A clear active-voice statement: “We will…”",
           },
           {
-            number: "3.6",
             term: "Consequences",
             description:
               "Positive, negative, and neutral effects, known risks, and follow-up work.",
           },
           {
-            number: "3.7",
             term: "Confirmation or review trigger",
             description:
               "Optional checks for compliance or evidence that should cause a successor ADR.",
@@ -741,7 +690,6 @@ export const guides = [
       {
         kind: "example",
         id: "wild",
-        number: "04",
         title: "In the wild",
         fileName: "adr-007-postgres-queue.md",
         documentTitle: "ADR-007: PostgreSQL job queue",
@@ -792,7 +740,6 @@ export const guides = [
       {
         kind: "dos",
         id: "dodont",
-        number: "05",
         title: "Do's & don'ts",
         dos: [
           "Record one architecturally significant decision per ADR",
@@ -812,7 +759,6 @@ export const guides = [
       {
         kind: "related",
         id: "rel",
-        number: "06",
         title: "Plays well with",
         guides: [
           {
@@ -834,7 +780,6 @@ export const guides = [
       {
         kind: "template",
         id: "tpl",
-        number: "07",
         title: "Steal the template",
         fileName: "adr-template.md",
         templatePath: "/templates/adr-template.md",

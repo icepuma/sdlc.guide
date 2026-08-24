@@ -29,7 +29,6 @@ const quickFacts = guide.meta
     </nav>
     <p>
       <strong>{guide.abbreviation}</strong>
-      <span>Guide {guide.index} / 03</span>
     </p>
   </div>
 
@@ -45,7 +44,6 @@ const quickFacts = guide.meta
     relatedSection?.kind === "related" && (
     <section class="guide-block" id={introSection.id} aria-labelledby="summary-title">
       <header class="guide-block__heading">
-        <span aria-hidden="true">01</span>
         <h2 id="summary-title">Summary</h2>
       </header>
 
@@ -113,7 +111,6 @@ const quickFacts = guide.meta
   {exampleSection?.kind === "example" && (
     <section class="guide-block" id={exampleSection.id} aria-labelledby="example-title">
       <header class="guide-block__heading">
-        <span aria-hidden="true">02</span>
         <h2 id="example-title">Full example</h2>
       </header>
 
@@ -184,9 +181,6 @@ const quickFacts = guide.meta
 }
 
 .guide-article__pretitle p {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-xs);
   color: var(--ink-soft);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
@@ -231,19 +225,9 @@ const quickFacts = guide.meta
 }
 
 .guide-block__heading {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-sm);
   margin-block-end: var(--space-lg);
   padding-block-end: var(--space-sm);
   border-block-end: 1px solid var(--line);
-}
-
-.guide-block__heading > span {
-  color: var(--guide-color);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-label);
 }
 
 .guide-block__heading h2 {
