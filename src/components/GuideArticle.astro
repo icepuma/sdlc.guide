@@ -8,7 +8,6 @@ interface Props {
 
 const { guide } = Astro.props;
 const { data } = guide;
-const phaseName = data.phase === "plan" ? "Planning" : "Design";
 const lifecycleHref = `/#${data.phase}`;
 const factLeads = ["Also called", "Written by", "Ideal length", "Shelf life"] as const;
 const quickFacts = data.facts
@@ -20,11 +19,12 @@ const relatedGuides = await getEntries(data.related.map((related) => related.gui
 <article class="guide-article" style={`--guide-color: var(${guideColorVariable(guide)})`}>
   <div class="guide-article__pretitle">
     <nav aria-label="Breadcrumb">
-      <a href={lifecycleHref}>← {phaseName} in the lifecycle</a>
+      <ol class="guide-article__breadcrumbs">
+        <li><a href={lifecycleHref}>Lifecycle</a></li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page">{data.abbreviation}</li>
+      </ol>
     </nav>
-    <p>
-      <strong>{data.abbreviation}</strong>
-    </p>
   </div>
 
   <header class="guide-article__header">
@@ -125,12 +125,18 @@ const relatedGuides = await getEntries(data.related.map((related) => related.gui
 }
 
 .guide-article__pretitle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-xs) var(--space-md);
-  flex-wrap: wrap;
   padding-block-start: clamp(var(--space-md), 3vw, var(--space-lg));
+}
+
+.guide-article__breadcrumbs {
+  display: flex;
+  padding: 0;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  list-style: none;
 }
 
 .guide-article__pretitle a {
@@ -150,18 +156,17 @@ const relatedGuides = await getEntries(data.related.map((related) => related.gui
   color: var(--ink);
 }
 
-.guide-article__pretitle p {
-  color: var(--ink-soft);
+.guide-article__breadcrumbs > li[aria-hidden] {
+  opacity: 0.5;
+}
+
+.guide-article__breadcrumbs > li[aria-current] {
+  color: var(--guide-color);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-label);
   line-height: var(--line-height-label);
   text-transform: uppercase;
-}
-
-.guide-article__pretitle strong {
-  color: var(--guide-color);
-  font-weight: var(--font-weight-bold);
 }
 
 .guide-article__header {
