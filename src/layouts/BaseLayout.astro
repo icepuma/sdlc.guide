@@ -1,5 +1,6 @@
 ---
 import { Font } from "astro:assets";
+import SiteFooter from "../components/SiteFooter.astro";
 import "../styles/global.css";
 
 interface Props {
@@ -60,5 +61,6 @@ const socialImage = new URL("/og-image.svg", siteBase);
     <main id="main-content" tabindex="-1">
       <slot />
     </main>
+    <SiteFooter />
   </body>
 </html>
