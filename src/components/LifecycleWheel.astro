@@ -292,7 +292,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
               <feMorphology
                 in="SourceAlpha"
                 operator="erode"
-                radius="0.5"
+                radius="0.25"
                 result="eroded"
               ></feMorphology>
               <feComposite in="SourceGraphic" in2="eroded" operator="out"></feComposite>
@@ -310,7 +310,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
               <feMorphology
                 in="SourceAlpha"
                 operator="erode"
-                radius="0.9"
+                radius="0.6"
                 result="eroded"
               ></feMorphology>
               <feComposite in="SourceGraphic" in2="eroded" operator="out"></feComposite>
@@ -576,6 +576,8 @@ window.addEventListener(
   "pointerdown",
   () => {
     keyboardFocus = false;
+    for (const edge of focusEdges.values()) edge.classList.remove("is-focused");
+    for (const link of documentLinkNodes) link.classList.remove("is-keyboard-focused");
   },
   { capture: true },
 );
