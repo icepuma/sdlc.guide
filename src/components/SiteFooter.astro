@@ -1,0 +1,54 @@
+---
+const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
+---
+
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <a href={repositoryUrl} aria-label="View icepuma/sdlc.guide on GitHub">GitHub</a>
+  </div>
+</footer>
+
+<style>
+.site-footer {
+  width: min(100%, var(--container-shell));
+  margin-inline: auto;
+  padding: 0 max(var(--page-gutter), env(safe-area-inset-right)) env(safe-area-inset-bottom)
+    max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+.site-footer__inner {
+  display: flex;
+  min-width: 0;
+  height: var(--space-2xl);
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.site-footer a {
+  display: inline-flex;
+  min-width: var(--control-size);
+  min-height: var(--control-size);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-label);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.28em;
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    text-decoration-color var(--duration-fast) var(--ease-out);
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  color: var(--ink-soft);
+  text-decoration-color: currentColor;
+}
+</style>

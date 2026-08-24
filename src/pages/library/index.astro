@@ -4,10 +4,7 @@ import SiteHeader from "../../components/SiteHeader.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout
-  title="The library"
-  description="Browse the software lifecycle documents, phase by phase."
->
+<BaseLayout title="Guides" description="Browse software lifecycle guidance, phase by phase.">
   <div class="library-page">
     <SiteHeader />
     <LibraryView />
@@ -16,6 +13,6 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
 <style>
 .library-page {
-  min-height: 100svh;
+  min-height: 100%;
 }
 </style>

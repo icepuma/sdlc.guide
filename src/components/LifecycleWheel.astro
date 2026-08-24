@@ -258,7 +258,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
     <nav class="wheel__sculpture" aria-label="Lifecycle guides">
       <div class="wheel__art">
         <svg class="wheel__ring" viewBox="0 0 100 100">
-          <title>Lifecycle wheel</title>
+          <title>Software development lifecycle</title>
           <defs>
             <mask
               id="lifecycle-seams"
@@ -503,7 +503,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
           </li>
         ))}
       </ol>
-      <a href="/library/">Browse the library</a>
+      <a href="/library/">Browse guides</a>
     </div>
   </noscript>
 </section>
@@ -680,16 +680,18 @@ window.addEventListener("hashchange", applyHash);
 .wheel-stage {
   display: grid;
   width: 100%;
-  min-height: calc(100svh - 4.75rem);
+  min-height: 0;
   place-items: center;
   padding: clamp(var(--space-sm), 2vmin, var(--space-md))
     max(var(--page-gutter), env(safe-area-inset-right))
     clamp(var(--space-sm), 2vmin, var(--space-md))
     max(var(--page-gutter), env(safe-area-inset-left));
+  container-name: lifecycle-stage;
+  container-type: size;
 }
 
 .wheel {
-  --wheel-size: clamp(17.5rem, min(87vw, calc(100svh - 9rem)), 46rem);
+  --wheel-size: min(87vw, calc(100svh - 12rem), 46rem);
   --wheel-hit-size: clamp(var(--control-size), 13cqw, 4.75rem);
   --wheel-hub-gap: clamp(0.35rem, 0.8cqw, 0.55rem);
   --wheel-hub-number-size: clamp(0.56rem, 1.45cqw, 0.72rem);
@@ -706,6 +708,12 @@ window.addEventListener("hashchange", applyHash);
   isolation: isolate;
   container-name: lifecycle-wheel;
   container-type: inline-size;
+}
+
+@supports (height: 1cqh) {
+  .wheel {
+    --wheel-size: min(87vw, calc(100cqh - var(--space-xl)), 46rem);
+  }
 }
 
 .wheel__halo {

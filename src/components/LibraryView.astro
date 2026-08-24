@@ -5,19 +5,19 @@ const liveGuideCount = Object.values(lifecycleDocuments).filter((document) => do
 const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 ---
 
-<section class="library-view" aria-labelledby="library-title">
+<section class="library-view" aria-labelledby="guides-title">
   <div class="library-view__topline">
     <nav class="library-view__breadcrumbs" aria-label="Breadcrumb">
-      <a href="/">The wheel</a>
+      <a href="/">Lifecycle</a>
       <span aria-hidden="true">/</span>
-      <span aria-current="page">The library</span>
+      <span aria-current="page">Guides</span>
     </nav>
     <p class="library-view__count">{liveGuideLabel}</p>
   </div>
 
   <header class="library-view__intro">
-    <h1 id="library-title">The library</h1>
-    <p>The lifecycle&apos;s documents, phase by phase.</p>
+    <h1 id="guides-title">Guides</h1>
+    <p>Lifecycle guidance, phase by phase.</p>
   </header>
 
   <ul class="library-view__grid" aria-label="Lifecycle guides by phase">

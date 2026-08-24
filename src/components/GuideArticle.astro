@@ -7,7 +7,7 @@ interface Props {
 
 const { guide } = Astro.props;
 const phaseName = guide.phase === "plan" ? "Planning" : "Design";
-const wheelHref = `/${guide.phaseHash}`;
+const lifecycleHref = `/${guide.phaseHash}`;
 const guidePath = (item: Guide) => `/${item.phase}/${item.id}/`;
 const introSection = guide.sections.find((section) => section.kind === "intro");
 const whenSection = guide.sections.find((section) => section.kind === "when");
@@ -25,7 +25,7 @@ const quickFacts = guide.meta
 <article class="guide-article" style={`--guide-color: var(${guide.colorVariable})`}>
   <div class="guide-article__pretitle">
     <nav aria-label="Breadcrumb">
-      <a href={wheelHref}>← {phaseName} on the wheel</a>
+      <a href={lifecycleHref}>← {phaseName} in the lifecycle</a>
     </nav>
     <p>
       <strong>{guide.abbreviation}</strong>

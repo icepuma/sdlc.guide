@@ -1,7 +1,5 @@
 ---
 import ThemeToggle from "./ThemeToggle.astro";
-
-const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
 ---
 
 <header class="site-header">
@@ -20,15 +18,7 @@ const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
 
   <div class="site-header__actions">
     <nav class="site-header__navigation" aria-label="Primary navigation">
-      <a class="site-header__library" href="/library/">Library</a>
-      <span class="site-header__nav-separator" aria-hidden="true">/</span>
-      <a
-        class="site-header__repository"
-        href={repositoryUrl}
-        aria-label="View icepuma/sdlc.guide on GitHub"
-      >
-        GitHub
-      </a>
+      <a class="site-header__guides" href="/library/">Guides</a>
     </nav>
     <ThemeToggle />
   </div>
@@ -126,20 +116,17 @@ const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
   align-items: center;
 }
 
-.site-header__navigation {
-  gap: var(--space-xs);
-}
-
 .site-header__actions {
   flex: 0 0 auto;
   gap: clamp(var(--space-xs), 2vw, var(--space-lg));
 }
 
-.site-header__library,
-.site-header__repository {
+.site-header__guides {
   display: inline-flex;
+  min-width: var(--control-size);
   min-height: var(--control-size);
   align-items: center;
+  justify-content: center;
   color: var(--ink);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -153,16 +140,8 @@ const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
     text-decoration-color var(--duration-fast) var(--ease-out);
 }
 
-.site-header__nav-separator {
-  color: color-mix(in oklch, var(--ink-soft) 55%, transparent);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-label);
-}
-
-.site-header__library:hover,
-.site-header__repository:hover,
-.site-header__library:focus-visible,
-.site-header__repository:focus-visible {
+.site-header__guides:hover,
+.site-header__guides:focus-visible {
   color: var(--ink-soft);
   text-decoration-color: currentColor;
 }
