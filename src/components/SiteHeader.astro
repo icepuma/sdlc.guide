@@ -1,5 +1,7 @@
 ---
 import ThemeToggle from "./ThemeToggle.astro";
+
+const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
 ---
 
 <header class="site-header">
@@ -19,6 +21,13 @@ import ThemeToggle from "./ThemeToggle.astro";
   <div class="site-header__actions">
     <nav class="site-header__navigation" aria-label="Primary navigation">
       <a class="site-header__library" href="/library/">The library</a>
+      <a
+        class="site-header__repository"
+        href={repositoryUrl}
+        aria-label="View icepuma/sdlc.guide on GitHub"
+      >
+        Repo
+      </a>
     </nav>
     <ThemeToggle />
   </div>
@@ -116,12 +125,17 @@ import ThemeToggle from "./ThemeToggle.astro";
   align-items: center;
 }
 
+.site-header__navigation {
+  gap: clamp(var(--space-xs), 1.5vw, var(--space-md));
+}
+
 .site-header__actions {
   flex: 0 0 auto;
   gap: clamp(var(--space-xs), 2vw, var(--space-lg));
 }
 
-.site-header__library {
+.site-header__library,
+.site-header__repository {
   display: inline-flex;
   min-height: var(--control-size);
   align-items: center;
@@ -136,7 +150,8 @@ import ThemeToggle from "./ThemeToggle.astro";
 }
 
 .site-header__brand:hover,
-.site-header__library:hover {
+.site-header__library:hover,
+.site-header__repository:hover {
   color: var(--ink-soft);
 }
 
