@@ -698,7 +698,7 @@ window.addEventListener("hashchange", applyHash);
   --wheel-hub-padding: clamp(0.5rem, 2.4cqw, 1.15rem);
   --wheel-hub-title-size: clamp(1.3rem, 6.3cqw, 3.15rem);
   --wheel-muted-opacity: 0.68;
-  --wheel-state-duration: var(--duration-medium);
+  --wheel-state-duration: var(--duration-fast);
   --wheel-hover-duration: var(--duration-fast);
   position: relative;
   display: grid;
@@ -761,6 +761,10 @@ window.addEventListener("hashchange", applyHash);
 .wheel__document-segment:not(.is-placeholder) {
   cursor: pointer;
   outline: none;
+  pointer-events: none;
+}
+
+.wheel__document-group.is-visible .wheel__document-segment:not(.is-placeholder) {
   pointer-events: auto;
 }
 
@@ -772,7 +776,7 @@ window.addEventListener("hashchange", applyHash);
 .wheel__document-shape {
   fill: var(--document-color);
   stroke: none;
-  pointer-events: visiblePainted;
+  pointer-events: none;
   shape-rendering: geometricPrecision;
   transition: fill var(--wheel-hover-duration) var(--ease-out);
 }
@@ -780,6 +784,18 @@ window.addEventListener("hashchange", applyHash);
 .wheel__document-hit {
   fill: transparent;
   stroke: none;
+  pointer-events: none;
+}
+
+.wheel__document-group.is-visible
+  .wheel__document-segment:not(.is-placeholder)
+  .wheel__document-shape {
+  pointer-events: visiblePainted;
+}
+
+.wheel__document-group.is-visible
+  .wheel__document-segment:not(.is-placeholder)
+  .wheel__document-hit {
   pointer-events: fill;
 }
 
@@ -832,6 +848,7 @@ window.addEventListener("hashchange", applyHash);
 .wheel__edge-layer--selected .wheel__edge-source {
   fill: var(--phase-ink);
   stroke: var(--phase-ink);
+  transition: none;
 }
 
 .wheel__edge-layer--focus .wheel__edge-source {
@@ -916,6 +933,10 @@ window.addEventListener("hashchange", applyHash);
 
 .phase-control:focus-visible {
   outline: none;
+}
+
+.phase-control[aria-expanded="true"] {
+  pointer-events: none;
 }
 
 .wheel__center {
