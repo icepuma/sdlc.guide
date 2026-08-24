@@ -18,6 +18,7 @@
     "deploy": "bun run build && WRANGLER_LOG_PATH=/tmp/sdlc-guide-wrangler.log wrangler deploy"
   },
   "dependencies": {
+    "@astrojs/mdx": "7.0.7",
     "@astrojs/sitemap": "3.7.3",
     "astro": "7.2.4"
   },

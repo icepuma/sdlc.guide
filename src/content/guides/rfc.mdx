@@ -1,0 +1,164 @@
+---
+slug: rfc
+phase: design
+abbreviation: RFC
+name: Request for comments
+summary: Turns a substantial technical change into a reviewable proposal before implementation.
+tagline: A proposal written early enough that review can still change the approach.
+order: 2
+facts:
+  - label: A.K.A.
+    value: Internal design proposal
+  - label: WRITTEN BY
+    value: Change owner with affected engineers and operators
+  - label: IDEAL LENGTH
+    value: As short as the decision allows
+  - label: SHELF LIFE
+    value: Living through review; retain the outcome and links
+sources:
+  - label: Rust RFC process
+    url: https://rust-lang.github.io/rfcs/
+  - label: Rust RFC template
+    url: https://github.com/rust-lang/rfcs/blob/master/0000-template.md
+  - label: "RFC Editor: What is an RFC?"
+    url: https://www.rfc-editor.org/series/rfc/
+template:
+  fileName: rfc-template.md
+  href: /templates/rfc-template.md
+  note: An internal engineering RFC template for context, scope, design, alternatives, risks, rollout,
+    open questions, and the recorded outcome.
+overview:
+  paragraphs:
+    - This guide uses RFC in the internal engineering sense, not the IETF or RFC Editor series. It
+      is a written proposal for a substantial technical change, shared early enough that review can
+      still alter the design before the team commits to implementation.
+    - An internal RFC makes the problem, goals, proposed design, alternatives, drawbacks,
+      operational impact, and unresolved questions visible. Review should improve the proposal and
+      record a clear outcome. Acceptance allows implementation to proceed; it does not guarantee
+      that the change will be implemented or shipped.
+  takeaway: Make the trade-offs reviewable before implementation.
+  useWhen:
+    - A public or cross-team contract will change
+    - A design is hard or expensive to reverse
+    - Material alternatives need an explicit technical decision
+    - Security, reliability, operations, compatibility, or migration need review
+  skipWhen:
+    - A contained fix or refactor fits normal code review
+    - A reversible experiment can answer the question more directly
+    - The change is already governed by an accepted decision or standard
+    - The goal is only to record a decision already made — use an ADR when it is architectural
+  anatomy:
+    - term: Metadata & decision owner
+      description: Status, owner, decision authority, required reviewers, review window, and related work.
+    - term: Summary
+      description: One short paragraph with the problem, recommendation, main trade-off, and decision requested.
+    - term: Context, goals & non-goals
+      description: Evidence, users, constraints, desired result, and scope without assuming one answer.
+    - term: Proposed design
+      description: Behavior, interfaces, data, failure modes, compatibility, and enough detail to review.
+    - term: Alternatives & prior art
+      description: Viable options, the status quo, relevant precedent, and why they are not preferred.
+    - term: Risks & mitigations
+      description: Drawbacks and relevant security, privacy, reliability, performance, cost, or
+        operational risk.
+    - term: Rollout & operation
+      description: "When relevant: migration, testing, enablement, observability, ownership, and rollback."
+    - term: Open questions
+      description: Questions that must be answered before a decision, each with an owner.
+    - term: Decision outcome
+      description: Accepted, rejected, withdrawn, or postponed; rationale, date, dissent, and follow-up links.
+  dos:
+    - Name the decision owner, affected reviewers, review window, and outcome needed
+    - Make motivation, drawbacks, alternatives, and unresolved questions explicit
+    - Revise the proposal visibly as review changes the design
+    - Address material objections before the decision owner records an outcome
+    - Link implementation tracking and record a lasting architecture choice in an ADR when useful
+  donts:
+    - Present an implementation as an open proposal after the team has already committed
+    - Treat an internal RFC as an IETF RFC or assume every published RFC is an Internet Standard
+    - Require unanimity or treat silence as approval of a material risk
+    - Assume acceptance guarantees priority, assignment, implementation, or release
+    - Reopen a closed decision without new evidence or a changed constraint
+related:
+  - guide: prd
+    description: A PRD supplies product intent when that intent is what motivates the proposed change.
+  - guide: adr
+    description: If an RFC establishes an enduring architecture choice, an ADR can preserve the decision
+      and consequences.
+example:
+  fileName: rfc-042-webhooks.md
+  documentTitle: RFC-042 · Accept signed webhooks for partner event ingestion
+  documentMeta: "ILLUSTRATIVE EXAMPLE · fictional data and targets · status: OPEN FOR COMMENTS ·
+    owner: mira@ · decision owner: platform lead · reviewers: security, integrations, operations ·
+    review closes: 2026-09-04 · related: INGEST-314, INC-204"
+---
+
+#### Summary
+
+Our integrations poll 14 partner APIs every 60 seconds, but 98.6% of calls return no new data. This RFC proposes signed webhooks, durable event storage, and a replayable queue. The review asks whether this design and migration plan can target p95 ingest latency below 2 seconds and about 90% fewer partner API calls without missing events. Polling remains the rollout and rollback path.
+
+#### Problem
+
+New partner events can wait almost a minute before we see them. Empty polling calls consume rate-limit capacity, increase cost, and make delayed data hard to diagnose.
+
+- Fourteen integrations poll once per minute.
+- 98.6% of calls return no new events.
+- Some partners already warn when we approach rate limits.
+- A failed poll can silently delay data until the next successful cycle.
+
+#### Goals & non-goals
+
+The proposal is limited to event ingestion for partners that support webhooks.
+
+- Goal · Reduce ingest latency and empty API calls while preserving event completeness.
+- Goal · Provide durable receipt, idempotency, replay, and operational visibility.
+- Non-goal · Redesign downstream event processing or require every partner to adopt webhooks.
+- Non-goal · Remove polling before a partner passes the parallel-run checks.
+
+#### Proposed design
+
+Each webhook-capable partner gets an endpoint at /webhooks/\{partner\}. The receiver verifies the signature and timestamp, stores the raw event and idempotency key, then queues a reference for asynchronous processing. It returns success only after durable storage.
+
+- Reject missing, expired, or invalid signatures.
+- Deduplicate by partner and event ID for 30 days.
+- Retry failed processing for 24 hours, then expose it in a replayable dead-letter view.
+- Record latency, accepted events, signature failures, duplicates, retries, and queue age.
+- Keep polling enabled until each partner passes its migration period.
+- Security owns signature verification and secret rotation; privacy owns raw-event retention; operations owns replay access and log-redaction checks.
+
+#### Alternatives considered
+
+Shorter polling is cheaper to build but creates roughly six times more requests and still adds delay. Partner-hosted queues are cleaner, but only two of fourteen partners offer one. Doing nothing keeps the current cost, latency, and operational blind spots.
+
+#### Risks & drawbacks
+
+Webhooks add public endpoints, secret rotation, duplicate delivery, burst handling, and another failure mode to operate.
+
+- Rate-limit each partner independently.
+- Store before processing so retries cannot lose data.
+- Bound payload size and reject unsupported event types.
+- Rotate secrets with two active keys during a transition.
+- Keep polling as the immediate rollback path.
+
+#### Rollout
+
+Enable the receiver behind a per-partner flag and migrate one partner at a time. Polling stays enabled until the acceptance checks pass.
+
+- Ship the receiver, durable store, replay queue, and dashboards.
+- Run polling and webhooks in parallel for one low-volume partner for seven days.
+- Accept the run only with no missed events, p95 latency below 2 seconds, and no material increase in processing errors.
+- Test rollback by disabling the webhook flag and confirming polling resumes without duplicate processing.
+- Enable the next partner only after the prior partner meets the checks.
+- Disable polling only after seven stable days; re-enable it to back out.
+
+#### Open questions
+
+The decision owner must resolve or explicitly defer each question before closing the RFC.
+
+- Do we need per-partner queue workers on day one, or is receiver rate limiting enough?
+- What payload retention period meets support and privacy needs?
+- Should dead-letter replay require an on-call approval step?
+
+#### Decision outcome
+
+Pending. When review closes, record accepted, rejected, withdrawn, or postponed; explain the rationale; note material dissent; and link the implementation issue and any resulting ADR.

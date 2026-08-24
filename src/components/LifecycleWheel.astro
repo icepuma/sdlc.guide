@@ -1,6 +1,8 @@
 ---
-import { type LifecycleDocumentId, lifecycleDocuments, lifecyclePhases } from "../data/lifecycle";
+import { type LifecycleDocumentId, lifecyclePhases } from "../data/lifecycle";
+import { getGuides, guidePath, indexGuides, requireGuide } from "../lib/guides";
 
+const guideIndex = indexGuides(await getGuides());
 const step = 360 / lifecyclePhases.length;
 const format = (value: number) => value.toFixed(2);
 const degreesPerRadian = 180 / Math.PI;
@@ -188,7 +190,14 @@ const phases = lifecyclePhases.map((phase, index) => {
   const segment = segmentPath(angle);
   const labelPoint = pointOnCircle(angle + 3.4, mainRingMiddleRadius);
   const documentIds = phase.documents as readonly LifecycleDocumentId[];
-  const documents = documentIds.map((id) => lifecycleDocuments[id]);
+  const documents = documentIds.map((id) => {
+    const guide = requireGuide(guideIndex, id);
+    return {
+      id: guide.data.slug,
+      abbreviation: guide.data.abbreviation,
+      path: guidePath(guide),
+    };
+  });
   return {
     ...phase,
     angle,

@@ -1,144 +1,112 @@
 ---
-import { type Guide, guideById } from "../data/guides";
+import { getEntries } from "astro:content";
+import { type GuideEntry, guideColorVariable, guidePath } from "../lib/guides";
 
 interface Props {
-  guide: Guide;
+  guide: GuideEntry;
 }
 
 const { guide } = Astro.props;
-const phaseName = guide.phase === "plan" ? "Planning" : "Design";
-const lifecycleHref = `/${guide.phaseHash}`;
-const guidePath = (item: Guide) => `/${item.phase}/${item.id}/`;
-const introSection = guide.sections.find((section) => section.kind === "intro");
-const whenSection = guide.sections.find((section) => section.kind === "when");
-const anatomySection = guide.sections.find((section) => section.kind === "anatomy");
-const exampleSection = guide.sections.find((section) => section.kind === "example");
-const dosSection = guide.sections.find((section) => section.kind === "dos");
-const relatedSection = guide.sections.find((section) => section.kind === "related");
-const templateSection = guide.sections.find((section) => section.kind === "template");
+const { data } = guide;
+const phaseName = data.phase === "plan" ? "Planning" : "Design";
+const lifecycleHref = `/#${data.phase}`;
 const factLeads = ["Also called", "Written by", "Ideal length", "Shelf life"] as const;
-const quickFacts = guide.meta
+const quickFacts = data.facts
   .map((fact, index) => `${factLeads[index] ?? fact.label}: ${fact.value}`)
   .join(". ");
+const relatedGuides = await getEntries(data.related.map((related) => related.guide));
 ---
 
-<article class="guide-article" style={`--guide-color: var(${guide.colorVariable})`}>
+<article class="guide-article" style={`--guide-color: var(${guideColorVariable(guide)})`}>
   <div class="guide-article__pretitle">
     <nav aria-label="Breadcrumb">
       <a href={lifecycleHref}>← {phaseName} in the lifecycle</a>
     </nav>
     <p>
-      <strong>{guide.abbreviation}</strong>
+      <strong>{data.abbreviation}</strong>
     </p>
   </div>
 
   <header class="guide-article__header">
-    <h1>{guide.name}</h1>
-    <p class="guide-article__tagline">{guide.tagline}</p>
+    <h1>{data.name}</h1>
+    <p class="guide-article__tagline">{data.tagline}</p>
   </header>
 
-  {introSection?.kind === "intro" &&
-    whenSection?.kind === "when" &&
-    anatomySection?.kind === "anatomy" &&
-    dosSection?.kind === "dos" &&
-    relatedSection?.kind === "related" && (
-    <section class="guide-block" id={introSection.id} aria-labelledby="summary-title">
-      <header class="guide-block__heading">
-        <h2 id="summary-title">Summary</h2>
-      </header>
+  <section class="guide-block" id="what" aria-labelledby="summary-title">
+    <header class="guide-block__heading">
+      <h2 id="summary-title">Summary</h2>
+    </header>
 
-      <div class="guide-summary">
-        <p>
-          <strong>At a glance.</strong> {quickFacts}.
-        </p>
-        {templateSection?.kind === "template" && (
-          <p id={templateSection.id}>
-            <strong>Template.</strong> {templateSection.note}{" "}
-            <a href={templateSection.templatePath} download={templateSection.fileName}>
-              Download {templateSection.fileName} ↓
-            </a>
-          </p>
-        )}
-        {introSection.paragraphs.map((paragraph) => (
-          <p>{paragraph}</p>
-        ))}
-        <p><strong>In short.</strong> {introSection.pullQuote}</p>
-        <p id={whenSection.id}>
-          <strong>Use it when.</strong> {whenSection.reachForItWhen.join("; ")}.
-        </p>
-        <p>
-          <strong>Skip it when.</strong> {whenSection.skipItWhen.join("; ")}.
-        </p>
-        <p id={anatomySection.id}>
-          <strong>What it contains.</strong> {
-            anatomySection.items
-              .map((item) => `${item.term}: ${item.description}`)
-              .join(" ")
-          }
-        </p>
-        <p id={dosSection.id}>
-          <strong>Write it well.</strong> {dosSection.dos.join("; ")}. <strong>Avoid.</strong> {
-            dosSection.donts.join("; ")
-          }.
-        </p>
-        <p id={relatedSection.id}>
-          <strong>Related.</strong>{" "}
-          {relatedSection.guides.map((related, index) => {
-            const relatedGuide = guideById[related.guideId];
+    <div class="guide-summary">
+      <p><strong>At a glance.</strong> {quickFacts}.</p>
+      <p id="tpl">
+        <strong>Template.</strong> {data.template.note}{" "}
+        <a href={data.template.href} download={data.template.fileName}>
+          Download {data.template.fileName} ↓
+        </a>
+      </p>
+      {data.overview.paragraphs.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
+      <p><strong>In short.</strong> {data.overview.takeaway}</p>
+      <p id="when"><strong>Use it when.</strong> {data.overview.useWhen.join("; ")}.</p>
+      <p><strong>Skip it when.</strong> {data.overview.skipWhen.join("; ")}.</p>
+      <p id="anatomy">
+        <strong>What it contains.</strong>
+        {data.overview.anatomy
+            .map((item) => `${item.term}: ${item.description}`)
+            .join(" ")}
+      </p>
+      <p id="dodont">
+        <strong>Write it well.</strong> {data.overview.dos.join("; ")}. <strong>Avoid.</strong>
+        {data.overview.donts.join("; ")}.
+      </p>
+      <p id="rel">
+        <strong>Related.</strong>{" "}
+        {data.related.map((related, index) => {
+          const relatedGuide = relatedGuides[index];
+          if (!relatedGuide) throw new Error(`Related guide is missing: ${related.guide.id}`);
 
-            return (
-              <span>
-                {index > 0 && " "}
-                <a href={guidePath(relatedGuide)}>{related.abbreviation}</a>
-                {` — ${related.description}`}
-              </span>
-            );
-          })}
-        </p>
-        <p>
-          <strong>Sources.</strong>{" "}
-          {guide.sources.map((source, index) => (
+          return (
             <span>
-              {index > 0 && " · "}
-              <a href={source.url}>{source.label}</a>
+              {index > 0 && " "}
+              <a href={guidePath(relatedGuide)}>{relatedGuide.data.abbreviation}</a>
+              {` — ${related.description}`}
             </span>
-          ))}
-        </p>
-      </div>
-    </section>
-  )}
+          );
+        })}
+      </p>
+      <p>
+        <strong>Sources.</strong>{" "}
+        {data.sources.map((source, index) => (
+          <span>
+            {index > 0 && " · "}
+            <a href={source.url}>{source.label}</a>
+          </span>
+        ))}
+      </p>
+    </div>
+  </section>
 
-  {exampleSection?.kind === "example" && (
-    <section class="guide-block" id={exampleSection.id} aria-labelledby="example-title">
-      <header class="guide-block__heading">
-        <h2 id="example-title">Full example</h2>
+  <section class="guide-block" id="wild" aria-labelledby="example-title">
+    <header class="guide-block__heading">
+      <h2 id="example-title">Full example</h2>
+    </header>
+
+    <article class="guide-example" aria-label={`Example: ${data.example.documentTitle}`}>
+      <header class="guide-example__bar">
+        <span>{data.example.fileName}</span>
+        <span>Complete document</span>
       </header>
-
-      <article class="guide-example" aria-label={`Example: ${exampleSection.documentTitle}`}>
-        <header class="guide-example__bar">
-          <span>{exampleSection.fileName}</span>
-          <span>Complete document</span>
-        </header>
-        <div class="guide-example__document">
-          <h3>{exampleSection.documentTitle}</h3>
-          <p class="guide-example__meta">{exampleSection.documentMeta}</p>
-          {exampleSection.entries.map((entry) => (
-            <section>
-              <h4>{entry.heading}</h4>
-              <p>{entry.text}</p>
-              {entry.items && (
-                <ul>
-                  {entry.items.map((item) => (
-                    <li>{item}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
+      <div class="guide-example__document">
+        <h3>{data.example.documentTitle}</h3>
+        <p class="guide-example__meta">{data.example.documentMeta}</p>
+        <div class="guide-example__content">
+          <slot />
         </div>
-      </article>
-    </section>
-  )}
+      </div>
+    </article>
+  </section>
 </article>
 
 <style>
@@ -302,12 +270,8 @@ const quickFacts = guide.meta
   line-height: var(--line-height-label);
 }
 
-.guide-example__document section + section {
-  margin-block-start: var(--space-lg);
-}
-
-.guide-example__document h4 {
-  margin: 0 0 var(--space-2xs);
+.guide-example__content :global(h4) {
+  margin: var(--space-lg) 0 var(--space-2xs);
   color: var(--guide-color);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
@@ -316,19 +280,23 @@ const quickFacts = guide.meta
   text-transform: uppercase;
 }
 
-.guide-example__document section p {
+.guide-example__content :global(h4:first-child) {
+  margin-block-start: 0;
+}
+
+.guide-example__content :global(p) {
   font-size: var(--font-size-base);
   line-height: var(--line-height-body);
 }
 
-.guide-example__document section ul {
+.guide-example__content :global(ul) {
   display: grid;
   gap: var(--space-xs);
   margin: var(--space-sm) 0 0;
   padding-inline-start: var(--space-lg);
 }
 
-.guide-example__document section li {
+.guide-example__content :global(li) {
   font-size: var(--font-size-base);
   line-height: var(--line-height-body);
 }

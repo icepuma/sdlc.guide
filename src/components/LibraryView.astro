@@ -1,7 +1,10 @@
 ---
-import { lifecycleDocuments, lifecyclePhases } from "../data/lifecycle";
+import { type LifecycleDocumentId, lifecyclePhases } from "../data/lifecycle";
+import { getGuides, guidePath, indexGuides, requireGuide } from "../lib/guides";
 
-const liveGuideCount = Object.values(lifecycleDocuments).filter((document) => document.live).length;
+const guides = await getGuides();
+const guideIndex = indexGuides(guides);
+const liveGuideCount = guides.length;
 const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 ---
 
@@ -33,24 +36,17 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
           {phase.documents.length > 0 ? (
             <ul class="library-view__guide-list">
               {phase.documents.map((documentId) => {
-                const document = lifecycleDocuments[documentId];
+                const document = requireGuide(guideIndex, documentId as LifecycleDocumentId);
 
                 return (
                   <li>
-                    {document.live ? (
-                      <a
-                        href={document.path}
-                        aria-label={`Read ${document.abbreviation}: ${document.name}`}
-                      >
-                        <span>{document.abbreviation}</span>
-                        <span class="library-view__guide-action" aria-hidden="true">read</span>
-                      </a>
-                    ) : (
-                      <span class="library-view__guide library-view__guide--soon">
-                        <span>{document.abbreviation}</span>
-                        <span>coming soon…</span>
-                      </span>
-                    )}
+                    <a
+                      href={guidePath(document)}
+                      aria-label={`Read ${document.data.abbreviation}: ${document.data.name}`}
+                    >
+                      <span>{document.data.abbreviation}</span>
+                      <span class="library-view__guide-action" aria-hidden="true">read</span>
+                    </a>
                   </li>
                 );
               })}
@@ -203,7 +199,6 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 }
 
 .library-view__guide-list a,
-.library-view__guide,
 .library-view__empty {
   display: flex;
   min-block-size: var(--control-size);
@@ -234,20 +229,10 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
   font-weight: var(--font-weight-semibold);
 }
 
-.library-view__guide--soon,
 .library-view__empty {
   color: var(--ink-soft);
   font-weight: var(--font-weight-regular);
   opacity: 0.78;
-}
-
-.library-view__guide--soon {
-  border-block-start: 1px solid color-mix(in oklch, var(--line) 55%, transparent);
-}
-
-.library-view__guide--soon > span:last-child {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
 }
 
 .library-view__empty {

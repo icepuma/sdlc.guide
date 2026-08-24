@@ -1,0 +1,124 @@
+---
+slug: adr
+phase: design
+abbreviation: ADR
+name: Architecture decision record
+summary: Records one architecturally significant decision, its context, status, and consequences.
+tagline: A short record of why the system is this way, for the people who change it next.
+order: 3
+facts:
+  - label: A.K.A.
+    value: Architecture decision record
+  - label: WRITTEN BY
+    value: Decision owner with the people making the choice
+  - label: IDEAL LENGTH
+    value: Usually one or two pages
+  - label: SHELF LIFE
+    value: Retain accepted or rejected records; supersede with a successor
+sources:
+  - label: Michael Nygard's original ADR article
+    url: https://www.cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+  - label: AWS ADR process
+    url: https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html
+  - label: Microsoft ADR guidance
+    url: https://learn.microsoft.com/en-us/azure/well-architected/architect-role/architecture-decision-record
+template:
+  fileName: adr-template.md
+  href: /templates/adr-template.md
+  note: A lightweight decision-record template informed by Nygard, with explicit ownership, options,
+    consequences, and a review trigger.
+overview:
+  paragraphs:
+    - "An architecture decision record captures one architecturally significant choice: the facts
+      and forces behind it, its status, the decision, and the consequences. The collection of ADRs
+      forms the decision log; one ADR is not itself the log."
+    - Draft the record while the choice is being made and review it before acceptance. State the
+      decision plainly and record what becomes easier, harder, or otherwise changes. Preserve
+      accepted or rejected records. If the context changes, propose a successor and mark the old ADR
+      superseded after the replacement is accepted.
+  takeaway: Record why the choice made sense under the conditions at the time.
+  useWhen:
+    - A choice affects system structure, quality attributes, dependencies, or interfaces
+    - A decision sets an engineering pattern that other work will follow
+    - A hard-to-reverse trade-off needs durable rationale and consequences
+    - An RFC or another discussion establishes an enduring architecture choice
+  skipWhen:
+    - A choice is local, temporary, low-risk, or easy to reverse
+    - A current standard or policy already records the decision and rationale
+    - The team is still comparing a broad proposal — use an RFC or design document
+  anatomy:
+    - term: Number & title
+      description: A stable ID and short title that names the decision.
+    - term: Status & ownership
+      description: Proposed, accepted, rejected, deprecated, or superseded; date, owner, and deciders.
+    - term: Context
+      description: Factual technical, product, project, and social forces that make a decision necessary.
+    - term: Options considered
+      description: Viable choices and the status quo when they are needed to understand the outcome.
+    - term: Decision
+      description: "A clear active-voice statement: “We will…”"
+    - term: Consequences
+      description: Positive, negative, and neutral effects, known risks, and follow-up work.
+    - term: Confirmation or review trigger
+      description: Optional checks for compliance or evidence that should cause a successor ADR.
+  dos:
+    - Record one architecturally significant decision per ADR
+    - Use a short title and state the decision in active voice
+    - Include the factual context, viable options, rationale, and all known consequences
+    - Keep the decision log in one durable place the project team can reach
+    - Preserve accepted or rejected records and link successor ADRs in both directions
+  donts:
+    - Rewrite an accepted or rejected ADR to hide how the decision changed
+    - Record every local implementation detail or temporary experiment
+    - Omit rejected options, rationale, negative consequences, or decision ownership
+    - Use an ADR as a broad design guide instead of a focused decision record
+    - Mark an ADR superseded before its replacement is accepted
+related:
+  - guide: rfc
+    description: Use an RFC to explore a substantial change; create an ADR when it establishes an
+      enduring architecture choice.
+  - guide: prd
+    description: A PRD sets product intent. It may prompt an ADR, but ADRs can arise anywhere a
+      significant architecture choice is made.
+example:
+  fileName: adr-007-postgres-queue.md
+  documentTitle: "ADR-007: PostgreSQL job queue"
+  documentMeta: "ILLUSTRATIVE EXAMPLE · status: ACCEPTED · date: 2026-03-14 · decision owner: platform
+    lead · deciders: platform team · supersedes: —"
+---
+
+#### Context
+
+We need delayed jobs and retries at about 50 jobs per minute. The team already operates Postgres well but has not run Redis or RabbitMQ in production. Adding a queue service now would add an on-call burden before it solves a current scale problem. Job creation must also remain transactionally coupled to application changes.
+
+#### Options considered
+
+The team compared PostgreSQL, a managed Redis queue, RabbitMQ, and continuing with synchronous work. PostgreSQL was preferred at the current scale because it preserves transactional enqueueing and uses an operated system. A dedicated queue offers stronger isolation and throughput but adds a service and on-call responsibility before those benefits are needed.
+
+#### Decision
+
+We will use PostgreSQL as the job queue, with a thin worker library that claims work through SELECT … FOR UPDATE SKIP LOCKED. The library schedules delayed jobs and retries failures; application code enqueues jobs in the same transaction as the data that created them.
+
+#### Consequences · easier now
+
+The decision deliberately trades future scale for present operational simplicity.
+
+- We operate one fewer production system.
+- Job enqueueing is transactional with application writes.
+- The queue uses existing Postgres backups, access controls, monitoring, and team knowledge.
+
+#### Consequences · harder now
+
+The cost of the choice is visible and accepted.
+
+- Queue traffic consumes database capacity and adds table-maintenance work.
+- The worker library becomes code the team must own and support.
+- At sustained load beyond the agreed service limits, a dedicated queue may become the lower-risk option.
+
+#### Revisit when
+
+If a trigger persists, propose a successor ADR. Keep this record unchanged and mark it superseded only after the replacement is accepted.
+
+- Volume approaches 500 jobs per minute.
+- Queue-table bloat, lock contention, or job latency affects normal database work.
+- The queue needs throughput or isolation that Postgres cannot provide safely.

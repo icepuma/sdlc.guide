@@ -1,36 +1,6 @@
-export const lifecycleDocuments = {
-  prd: {
-    id: "prd",
-    abbreviation: "PRD",
-    name: "Product requirements document",
-    phase: "plan",
-    path: "/plan/prd/",
-    summary: "Makes product intent, scope, behavior, and success measures reviewable.",
-    live: true,
-  },
-  rfc: {
-    id: "rfc",
-    abbreviation: "RFC",
-    name: "Request for comments",
-    phase: "design",
-    path: "/design/rfc/",
-    summary:
-      "Turns a substantial technical change into a reviewable proposal before implementation.",
-    live: true,
-  },
-  adr: {
-    id: "adr",
-    abbreviation: "ADR",
-    name: "Architecture decision record",
-    phase: "design",
-    path: "/design/adr/",
-    summary: "Records one architecturally significant decision, its context, and consequences.",
-    live: true,
-  },
-} as const;
+import type { PublishedSlug } from "../lib/topics";
 
-export type LifecycleDocumentId = keyof typeof lifecycleDocuments;
-export type LifecycleDocument = (typeof lifecycleDocuments)[LifecycleDocumentId];
+export type LifecycleDocumentId = PublishedSlug;
 
 export const lifecyclePhases = [
   {

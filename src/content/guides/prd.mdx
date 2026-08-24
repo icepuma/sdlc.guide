@@ -1,0 +1,158 @@
+---
+slug: prd
+phase: plan
+abbreviation: PRD
+name: Product requirements document
+summary: Makes product intent, scope, behavior, and success measures reviewable.
+tagline: A shared statement of the user problem, intended outcome, and evidence of success.
+order: 1
+facts:
+  - label: A.K.A.
+    value: Product spec
+  - label: WRITTEN BY
+    value: Product, design, engineering, and affected partners
+  - label: IDEAL LENGTH
+    value: No fixed length — concise enough to review
+  - label: SHELF LIFE
+    value: Updated through delivery and outcome review
+sources:
+  - label: Atlassian PRD guide
+    url: https://www.atlassian.com/agile/product-management/requirements
+  - label: GitLab Product Development Flow
+    url: https://handbook.gitlab.com/handbook/product-development/how-we-work/product-development-flow/
+  - label: GOV.UK discovery guidance
+    url: https://www.gov.uk/service-manual/agile-delivery/how-the-discovery-phase-works
+template:
+  fileName: prd-template.md
+  href: /templates/prd-template.md
+  note: A concise Markdown template for evidence, outcome, scope, testable behavior, measures,
+    dependencies, and open questions.
+overview:
+  paragraphs:
+    - A product requirements document makes a product decision reviewable. It states the user
+      problem and evidence, the intended outcome, scope boundaries, and the product behavior the
+      team must provide.
+    - Product, design, engineering, and affected stakeholders shape it together and update it as
+      evidence changes. It can link research, user flows, designs, constraints, risks, dependencies,
+      and delivery work. Technical trade-offs belong in an RFC when they need a separate decision.
+  takeaway: State the outcome. Make the behavior testable. Keep implementation choices open.
+  useWhen:
+    - A product or feature needs shared intent across disciplines
+    - The user problem, scope, or expected behavior needs review
+    - The team needs measurable outcomes and a clear review point
+    - Assumptions, dependencies, or open questions could change the work
+  skipWhen:
+    - A contained maintenance change already has clear evidence and acceptance criteria
+    - A low-risk, reversible experiment fits in a short brief or backlog item
+    - The document would only repeat information that is current and reviewable elsewhere
+  anatomy:
+    - term: Problem & evidence
+      description: Who is affected, what happens now, and the evidence behind the claim.
+    - term: Outcome & scope
+      description: The intended result, what is in scope, and what is out of scope for this release.
+    - term: Users, scenarios & links
+      description: The user, need, goal, and links to research, flows, prototypes, or designs.
+    - term: Requirements
+      description: Uniquely identified, traceable, observable behavior with acceptance criteria.
+    - term: Success measures
+      description: Baseline, target, data source, owner, and review point defined before delivery.
+    - term: Assumptions & dependencies
+      description: Constraints, risks, dependencies, owners, and how each item will be validated.
+    - term: Delivery plan
+      description: The main checkpoints and links to delivery work, without duplicating the backlog.
+    - term: Open questions
+      description: Research or decisions still needed, each with an owner and decision date.
+  dos:
+    - Write it with product, design, engineering, research, and affected partners
+    - Link evidence and record assumptions, dependencies, and open questions
+    - Give each requirement a stable ID and observable acceptance criteria
+    - Define the metric, baseline, target, data source, owner, and review point
+    - Keep the document concise and make updates visible as evidence changes
+  donts:
+    - Specify every implementation detail before the team has learned enough
+    - Use sign-off as a reason to freeze requirements that should change
+    - Let design or requirement changes happen without notifying affected people
+    - Define success as delivery rather than an outcome for users or the business
+    - Write the PRD alone or duplicate detailed work that can be linked
+related:
+  - guide: rfc
+    description: Use an RFC when a product requirement creates a substantial technical trade-off that
+      needs review.
+  - guide: adr
+    description: A PRD may prompt architecture decisions, but ADRs can arise anywhere a significant
+      choice is made.
+example:
+  fileName: prd-guest-checkout.md
+  documentTitle: PRD · Guest checkout
+  documentMeta: "ILLUSTRATIVE EXAMPLE · fictional data and targets · status: IN DELIVERY · owner:
+    jonas@ · contributors: checkout, design, analytics · target release: 2026-09-15 · last updated:
+    2026-08-24"
+---
+
+#### Problem & evidence
+
+During the last 90 days, 34% of new visitors who reached the forced sign-up step left checkout. Checkout events are the source. In the same period, support conversations tagged account-forced were the third most common checkout complaint.
+
+#### Intended outcome
+
+First-time shoppers can complete a one-time purchase without creating an account, while the existing account checkout remains stable.
+
+- User outcome · Complete a purchase without an unwanted account.
+- Business outcome · Improve new-visitor checkout completion.
+- Support outcome · Reduce contacts caused by forced account creation.
+
+#### Scope
+
+This release changes only the new-visitor path.
+
+- In scope · Guest choice at sign-in, guest contact and delivery details, payment, confirmation, and measurement.
+- Out of scope · Social-login rework and changes to the returning-user flow.
+- Out of scope · Loyalty-points integration — that is v2, tracked in OQ-2.
+
+#### Users & scenarios
+
+A first-time shopper finds an item, chooses Continue as guest, enters email, delivery, and payment details, then receives a normal order confirmation. Returning customers continue to use the existing sign-in flow. Supporting links: research CHECKOUT-18, user flow DES-204, and event plan DATA-91.
+
+#### Requirements
+
+Each requirement names observable product behavior and how the team will know it is complete.
+
+- R1 · Must — A first-time shopper at sign-in can choose Continue as guest and complete an order without account creation.
+- R2 · Must — Guest checkout collects name, email, delivery details, and payment details; it does not require a password.
+- R3 · Must — A completed guest order sends an order-confirmation email with order details and a support path.
+- R4 · Must — Returning customers can sign in and complete the existing account checkout without a new guest step.
+- R5 · Should — Account creation is offered only after the order is complete.
+
+#### Success metrics
+
+Analytics owns the measurement plan. Review the results 60 days after controlled release.
+
+- Outcome · New-visitor checkout completion: current baseline to +8 percentage points, using checkout events.
+- Outcome · Account-forced support contacts: current baseline to 50% fewer, using support tags.
+- Guardrail · Returning-customer checkout completion does not fall by more than 1 percentage point.
+- Data quality · Guest and account checkout completion remain separately observable from launch day.
+
+#### Assumptions, dependencies & risks
+
+Owners must validate these before the controlled release.
+
+- Assumption · Most forced-sign-up abandonment is caused by account creation, not payment or delivery friction — analytics and research own validation.
+- Dependency · Order lookup and support tooling must work without an account ID — checkout engineering owns delivery.
+- Risk · Guest orders could increase support effort or fraud exposure — support and risk teams own monitoring and mitigation.
+
+#### Milestones
+
+Use outcome checkpoints, not a detailed Gantt chart.
+
+- Approve the guest-flow design and event plan.
+- Build and QA in the checkout environment.
+- Release gradually to new visitors.
+- Review conversion and support results after 60 days.
+
+#### Open questions
+
+Each unresolved question has an owner and a decision point.
+
+- OQ-1 · Checkout engineering · Choose the guest order-lookup path by 2026-09-01.
+- OQ-2 · jonas@ · Decide whether guest purchases earn loyalty points before v2 planning on 2026-10-15.
+- OQ-3 · Product design · Decide when to offer post-purchase account creation by 2026-09-05.

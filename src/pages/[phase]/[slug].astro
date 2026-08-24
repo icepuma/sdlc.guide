@@ -1,27 +1,38 @@
 ---
+import { render } from "astro:content";
 import GuideArticle from "../../components/GuideArticle.astro";
 import SiteHeader from "../../components/SiteHeader.astro";
-import { type Guide, guides } from "../../data/guides";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { type GuideEntry, getGuides, guideTopic } from "../../lib/guides";
 
 interface Props {
-  guide: Guide;
+  guide: GuideEntry;
 }
 
-export function getStaticPaths() {
-  return guides.map((guide) => ({
-    params: { phase: guide.phase, slug: guide.id },
-    props: { guide },
-  }));
+export async function getStaticPaths() {
+  const guides = await getGuides();
+  return guides.map((guide) => {
+    const topic = guideTopic(guide);
+    return {
+      params: { phase: topic.phase, slug: topic.slug },
+      props: { guide },
+    };
+  });
 }
 
 const { guide } = Astro.props;
+const { Content } = await render(guide);
 ---
 
-<BaseLayout title={`${guide.abbreviation}: ${guide.name}`} description={guide.tagline}>
+<BaseLayout
+  title={`${guide.data.abbreviation}: ${guide.data.name}`}
+  description={guide.data.tagline}
+>
   <div class="guide-page">
     <SiteHeader />
-    <GuideArticle guide={guide} />
+    <GuideArticle guide={guide}>
+      <Content />
+    </GuideArticle>
   </div>
 </BaseLayout>
 
