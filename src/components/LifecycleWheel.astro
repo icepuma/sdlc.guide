@@ -7,10 +7,13 @@ const degreesPerRadian = 180 / Math.PI;
 const segmentCornerRadius = 1.1;
 const segmentGapWidth = 1.7;
 const segmentOutlineWidth = 0.15;
-const phaseLabelFontSize = 1.8;
+const phaseLabelFontSize = 2;
 const documentLabelFontSize = 1.5;
 const labelTracking = 0;
 const labelWeight = 700;
+const phaseLabelCenterOffset = 6;
+const phaseLabelBaselineOffset = 0.75;
+const phaseLabelInsetAngle = 2.4;
 const mainRing = {
   outerRadius: 36.6,
   innerRadius: 24.3,
@@ -34,7 +37,6 @@ const documentLabelInsetAngle =
   (documentRing.cornerRadius / documentRingMiddleRadius) * degreesPerRadian;
 
 type Point = { x: number; y: number };
-type Glyph = { character: string; transform: string; x: string; y: string };
 type AnnularRing = { innerRadius: number; outerRadius: number; cornerRadius: number };
 
 function pointOnCircle(angle: number, radius: number): Point {
@@ -123,13 +125,18 @@ function seamPath(boundary: number): string {
   );
 }
 
-function documentLabelPath(startAngle: number, endAngle: number, reverse: boolean): string {
-  const start = pointOnCircle(reverse ? endAngle : startAngle, documentRingMiddleRadius);
-  const end = pointOnCircle(reverse ? startAngle : endAngle, documentRingMiddleRadius);
+function curvedLabelPath(
+  startAngle: number,
+  endAngle: number,
+  radius: number,
+  reverse: boolean,
+): string {
+  const start = pointOnCircle(reverse ? endAngle : startAngle, radius);
+  const end = pointOnCircle(reverse ? startAngle : endAngle, radius);
   const sweep = reverse ? 0 : 1;
   return [
     `M ${pointText(start)}`,
-    `A ${format(documentRingMiddleRadius)} ${format(documentRingMiddleRadius)} 0 0 ${sweep} ${pointText(end)}`,
+    `A ${format(radius)} ${format(radius)} 0 0 ${sweep} ${pointText(end)}`,
   ].join(" ");
 }
 
@@ -166,29 +173,14 @@ function roundedAnnularSectorPath(
   ].join(" ");
 }
 
-function labelGlyphs(center: number, name: string): Glyph[] {
-  const adjustedCenter = center + 3.4;
+function phaseLabelPath(center: number): string {
+  const adjustedCenter = center + phaseLabelCenterOffset;
   const normalized = ((adjustedCenter % 360) + 360) % 360;
-  const flip = normalized > 93 && normalized < 267;
-  const characters = name.toUpperCase().split("");
-  const fontSize = phaseLabelFontSize;
-  const radius = flip ? 31.2 : 29.7;
-  const advance = ((fontSize * 0.82 + labelTracking) / radius) * degreesPerRadian;
-  const span = characters.length * advance;
-
-  return characters.map((character, index) => {
-    const angle = flip
-      ? adjustedCenter + span / 2 - (index + 0.5) * advance
-      : adjustedCenter - span / 2 + (index + 0.5) * advance;
-    const point = pointOnCircle(angle, radius);
-    const rotation = flip ? angle + 180 : angle;
-    return {
-      character,
-      x: format(point.x),
-      y: format(point.y),
-      transform: `rotate(${format(rotation)} ${format(point.x)} ${format(point.y)})`,
-    };
-  });
+  const reverse = normalized > 93 && normalized < 267;
+  const radius =
+    mainRingMiddleRadius + (reverse ? phaseLabelBaselineOffset : -phaseLabelBaselineOffset);
+  const halfSweep = step / 2 - phaseLabelInsetAngle;
+  return curvedLabelPath(adjustedCenter - halfSweep, adjustedCenter + halfSweep, radius, reverse);
 }
 
 const phases = lifecyclePhases.map((phase, index) => {
@@ -202,7 +194,8 @@ const phases = lifecyclePhases.map((phase, index) => {
     angle,
     segment,
     seam: seamPath(angle + step / 2),
-    glyphs: labelGlyphs(angle, phase.name),
+    labelPath: phaseLabelPath(angle),
+    labelPathId: `phase-label-${phase.id}`,
     labelPoint,
     documents,
   };
@@ -241,7 +234,7 @@ const documentGroups = phases.map((phase) => {
       parentPhase: phase.id,
       shape: roundedAnnularSectorPath(startAngle, endAngle),
       hitShape: roundedAnnularSectorPath(startAngle, endAngle, documentHitRing),
-      labelPath: documentLabelPath(labelStart, labelEnd, reverseLabel),
+      labelPath: curvedLabelPath(labelStart, labelEnd, documentRingMiddleRadius, reverseLabel),
       labelPathId: `document-label-${phase.id}-${item.id}`,
       colorVariable: phase.colorVariable,
     };
@@ -416,16 +409,16 @@ if (!initialPhase) throw new Error("Planning phase is required");
                 class:list={["wheel__label", { "is-selected": phase.id === initialPhase.id }]}
                 data-phase-label={phase.id}
               >
-                {phase.glyphs.map((glyph) => (
-                  <text
-                    x={glyph.x}
-                    y={glyph.y}
-                    transform={glyph.transform}
-                    focusable="false"
-                  >
-                    {glyph.character}
-                  </text>
-                ))}
+                <path
+                  class="wheel__phase-label-path"
+                  id={phase.labelPathId}
+                  d={phase.labelPath}
+                ></path>
+                <text focusable="false">
+                  <textPath href={`#${phase.labelPathId}`} startOffset="50%">
+                    {phase.name.toUpperCase()}
+                  </textPath>
+                </text>
               </g>
             ))}
           </g>
@@ -509,7 +502,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
           </li>
         ))}
       </ol>
-      <a href="/library/">Browse the library →</a>
+      <a href="/library/">Browse the library</a>
     </div>
   </noscript>
 </section>
@@ -897,11 +890,18 @@ window.addEventListener("hashchange", applyHash);
   opacity: 1;
 }
 
+.wheel__phase-label-path {
+  fill: none;
+  stroke: none;
+}
+
 .wheel__label text {
   fill: var(--phase-ink);
   font-size: var(--wheel-phase-label-size);
   font-weight: var(--wheel-label-weight);
+  letter-spacing: 0.06em;
   text-anchor: middle;
+  pointer-events: none;
 }
 
 .wheel__controls {
@@ -1002,5 +1002,10 @@ window.addEventListener("hashchange", applyHash);
 .wheel-fallback__links {
   display: flex;
   gap: var(--space-md);
+}
+
+.wheel-fallback a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 </style>

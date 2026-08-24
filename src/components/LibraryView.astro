@@ -17,10 +17,7 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 
   <header class="library-view__intro">
     <h1 id="library-title">The library</h1>
-    <p>
-      The lifecycle&apos;s documents, phase by phase. PRD, RFC, and ADR are live — the rest of the
-      wheel: coming soon…
-    </p>
+    <p>The lifecycle&apos;s documents, phase by phase.</p>
   </header>
 
   <ul class="library-view__grid" aria-label="Lifecycle guides by phase">
@@ -46,7 +43,7 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
                         aria-label={`Read ${document.abbreviation}: ${document.name}`}
                       >
                         <span>{document.abbreviation}</span>
-                        <span class="library-view__guide-action" aria-hidden="true">read →</span>
+                        <span class="library-view__guide-action" aria-hidden="true">read</span>
                       </a>
                     ) : (
                       <span class="library-view__guide library-view__guide--soon">
@@ -101,7 +98,9 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
   min-block-size: var(--control-size);
   align-items: center;
   color: inherit;
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
   transition: color var(--duration-fast) var(--ease-out);
 }
 
@@ -218,7 +217,9 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 }
 
 .library-view__guide-list a {
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
   transition: color var(--duration-fast) var(--ease-out);
 }
 

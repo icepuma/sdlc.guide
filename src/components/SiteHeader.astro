@@ -3,15 +3,22 @@ import ThemeToggle from "./ThemeToggle.astro";
 ---
 
 <header class="site-header">
-  <a class="site-header__brand" href="/" aria-label="SDLC Guide home">
-    <span class="site-header__name">SDLC Guide</span>
+  <div class="site-header__identity">
+    <a class="site-header__brand" href="/" aria-label="SDLC Guide home">
+      <span class="site-header__name">SDLC Guide</span>
+    </a>
     <span class="site-header__separator" aria-hidden="true"></span>
-    <span class="site-header__tagline">the software development life cycle, in the age of AI</span>
-  </a>
+    <span class="site-header__tagline">
+      <span class="site-header__stage">Work In Progress</span>
+      <span class="site-header__tagline-hint">
+        An opinionated SDLC built for agentic engineering teams.
+      </span>
+    </span>
+  </div>
 
   <div class="site-header__actions">
     <nav class="site-header__navigation" aria-label="Primary navigation">
-      <a class="site-header__library" href="/library/">The library →</a>
+      <a class="site-header__library" href="/library/">The library</a>
     </nav>
     <ThemeToggle />
   </div>
@@ -27,18 +34,25 @@ import ThemeToggle from "./ThemeToggle.astro";
   justify-content: space-between;
   gap: clamp(var(--space-xs), 2vw, var(--space-md));
   margin-inline: auto;
-  padding: max(var(--space-md), env(safe-area-inset-top))
+  padding: max(var(--space-lg), env(safe-area-inset-top))
     max(var(--page-gutter), env(safe-area-inset-right)) 0
     max(var(--page-gutter), env(safe-area-inset-left));
 }
 
-.site-header__brand {
+.site-header__identity {
   display: inline-flex;
   min-width: 0;
   min-height: var(--control-size);
   flex: 1 1 auto;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.site-header__brand {
+  display: inline-flex;
+  min-height: var(--control-size);
+  flex: 0 0 auto;
+  align-items: center;
   color: var(--ink);
   text-decoration: none;
   transition: color var(--duration-fast) var(--ease-out);
@@ -47,7 +61,7 @@ import ThemeToggle from "./ThemeToggle.astro";
 .site-header__name {
   flex: 0 0 auto;
   font-family: var(--font-brand);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-tight);
   white-space: nowrap;
@@ -55,21 +69,45 @@ import ThemeToggle from "./ThemeToggle.astro";
 
 .site-header__separator {
   width: 1px;
-  height: var(--space-md);
+  height: var(--space-lg);
   flex: 0 0 auto;
   background: var(--line);
 }
 
 .site-header__tagline {
+  display: flex;
   min-width: 0;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-2xs) var(--space-sm) var(--space-2xs) var(--space-2xs);
   overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--phase-plan) 10%, var(--background));
   color: var(--ink-soft);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-regular);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.01em;
   line-height: var(--line-height-label);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.site-header__stage {
+  flex: 0 0 auto;
+  padding-inline: var(--space-xs);
+  border-radius: var(--radius-pill);
+  background: var(--phase-plan);
+  color: var(--phase-ink);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+}
+
+.site-header__tagline-hint {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .site-header__actions,
@@ -88,9 +126,11 @@ import ThemeToggle from "./ThemeToggle.astro";
   min-height: var(--control-size);
   align-items: center;
   color: var(--ink);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
   white-space: nowrap;
   transition: color var(--duration-fast) var(--ease-out);
 }
@@ -100,8 +140,8 @@ import ThemeToggle from "./ThemeToggle.astro";
   color: var(--ink-soft);
 }
 
-@media (max-width: 26rem) {
-  .site-header__brand {
+@media (max-width: 47rem) {
+  .site-header__identity {
     flex: 0 1 auto;
     gap: var(--space-xs);
   }
@@ -113,10 +153,6 @@ import ThemeToggle from "./ThemeToggle.astro";
 
   .site-header__actions {
     gap: var(--space-xs);
-  }
-
-  .site-header__library {
-    font-size: var(--font-size-xs);
   }
 }
 </style>
