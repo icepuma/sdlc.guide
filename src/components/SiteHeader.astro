@@ -20,13 +20,14 @@ const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
 
   <div class="site-header__actions">
     <nav class="site-header__navigation" aria-label="Primary navigation">
-      <a class="site-header__library" href="/library/">The library</a>
+      <a class="site-header__library" href="/library/">Library</a>
+      <span class="site-header__nav-separator" aria-hidden="true">/</span>
       <a
         class="site-header__repository"
         href={repositoryUrl}
         aria-label="View icepuma/sdlc.guide on GitHub"
       >
-        Repo
+        GitHub
       </a>
     </nav>
     <ThemeToggle />
@@ -126,7 +127,7 @@ const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
 }
 
 .site-header__navigation {
-  gap: clamp(var(--space-xs), 1.5vw, var(--space-md));
+  gap: var(--space-xs);
 }
 
 .site-header__actions {
@@ -140,18 +141,33 @@ const repositoryUrl = "https://github.com/icepuma/sdlc.guide";
   min-height: var(--control-size);
   align-items: center;
   color: var(--ink);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, currentColor 45%, transparent);
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.2em;
+  text-underline-offset: 0.28em;
   white-space: nowrap;
-  transition: color var(--duration-fast) var(--ease-out);
+  transition:
+    color var(--duration-fast) var(--ease-out),
+    text-decoration-color var(--duration-fast) var(--ease-out);
 }
 
-.site-header__brand:hover,
+.site-header__nav-separator {
+  color: color-mix(in oklch, var(--ink-soft) 55%, transparent);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-label);
+}
+
 .site-header__library:hover,
-.site-header__repository:hover {
+.site-header__repository:hover,
+.site-header__library:focus-visible,
+.site-header__repository:focus-visible {
+  color: var(--ink-soft);
+  text-decoration-color: currentColor;
+}
+
+.site-header__brand:hover {
   color: var(--ink-soft);
 }
 
