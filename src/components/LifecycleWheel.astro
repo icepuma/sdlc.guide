@@ -251,6 +251,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
   <div
     class="wheel"
     data-wheel
+    data-initial-phase={initialPhase.id}
     style={`--selected-color: var(${initialPhase.colorVariable}); --wheel-gap-width: ${segmentGapWidth}; --wheel-outline-width: ${segmentOutlineWidth}; --wheel-phase-label-size: ${phaseLabelFontSize}px; --wheel-document-label-size: ${documentLabelFontSize}px; --wheel-label-tracking: ${labelTracking}px; --wheel-label-weight: ${labelWeight}`}
   >
     <div class="wheel__halo" aria-hidden="true"></div>
@@ -665,8 +666,10 @@ function applyHash(): void {
     return;
   }
 
-  const initial = controls.find((candidate) => candidate.tabIndex === 0);
-  if (initial) selectPhase(initial, false, false, false);
+  const initial = controls.find(
+    (candidate) => candidate.dataset.phaseId === wheel?.dataset.initialPhase,
+  );
+  if (initial) selectPhase(initial, false, true, true);
 }
 
 applyHash();
