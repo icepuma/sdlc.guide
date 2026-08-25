@@ -15,9 +15,9 @@ export default defineConfig({
   fonts: [
     {
       provider: fontProviders.fontsource(),
-      name: "Source Sans 3",
+      name: "Funnel Sans",
       cssVariable: "--font-readable",
-      weights: ["200 900"],
+      weights: ["300 800"],
       styles: ["normal"],
       subsets: ["latin"],
       fallbacks: ["system-ui", "sans-serif"],

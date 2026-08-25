@@ -10,15 +10,120 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 >
   <div class="home-page">
     <SiteHeader />
-    <LifecycleWheel />
+
+    <section class="editorial-atlas" aria-labelledby="home-title">
+      <div class="editorial-atlas__copy">
+        <h1 id="home-title">Software Development Life Cycle</h1>
+        <div class="editorial-atlas__body">
+          <p>
+            It follows standard SDLC definitions, shaped by hands-on experience and documents agents
+            can use, such as Markdown. It is an evolving, adaptable framework—a guide rather than a
+            fixed process.
+          </p>
+          <p class="editorial-atlas__guide-hint">
+            See the framework in practice in the <a href="/guides/">Guides</a>.
+          </p>
+        </div>
+      </div>
+
+      <div class="editorial-atlas__lifecycle">
+        <LifecycleWheel />
+      </div>
+    </section>
   </div>
 </BaseLayout>
 
 <style>
 .home-page {
   display: grid;
-  min-height: 0;
+  min-height: 100%;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(min-content, 1fr);
+}
+
+.editorial-atlas {
+  --atlas-block-padding: var(--space-2xl);
+  display: grid;
+  width: min(100%, var(--container-shell));
+  min-width: 0;
+  align-items: center;
+  align-content: center;
+  gap: var(--space-xl);
+  margin-inline: auto;
+  padding: var(--atlas-block-padding) max(var(--page-gutter), env(safe-area-inset-right))
+    var(--space-xl) max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+.editorial-atlas__copy {
+  display: grid;
+  width: min(100%, 20rem);
+  justify-items: center;
+  justify-self: center;
+  gap: var(--space-md);
+  text-align: start;
+}
+
+.editorial-atlas h1 {
+  max-width: 24ch;
+  margin-inline-start: -0.02em;
+  font-size: var(--font-size-section);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-heading);
+  line-height: var(--line-height-tight);
+}
+
+.editorial-atlas__body {
+  display: grid;
+  max-width: 38ch;
+  gap: var(--space-sm);
+}
+
+.editorial-atlas__copy p {
+  color: var(--ink-soft);
+  font-size: var(--font-size-base);
+}
+
+.editorial-atlas__copy .editorial-atlas__guide-hint {
+  font-size: var(--font-size-sm);
+}
+
+.editorial-atlas__guide-hint a {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.editorial-atlas__guide-hint a:hover,
+.editorial-atlas__guide-hint a:focus-visible {
+  color: var(--ink-soft);
+}
+
+.editorial-atlas__lifecycle {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+}
+
+@media (min-width: 64rem) {
+  .editorial-atlas {
+    --atlas-block-padding: clamp(var(--space-lg), 4vh, var(--space-3xl));
+    grid-template-columns: minmax(18rem, 5fr) minmax(30rem, 7fr);
+    gap: clamp(var(--space-xl), 5vw, var(--space-4xl));
+    padding-block: var(--atlas-block-padding);
+  }
+
+  .editorial-atlas__copy {
+    width: min(100%, 32rem);
+    justify-items: start;
+    justify-self: start;
+    text-align: start;
+  }
+
+  .editorial-atlas__lifecycle {
+    align-self: stretch;
+  }
 }
 </style>

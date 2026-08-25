@@ -75,13 +75,15 @@
   --ink-soft: oklch(0.79 0.035 82);
   --line: oklch(0.39 0.055 315);
   --focus: oklch(0.84 0.15 78);
-  --phase-discover: oklch(0.68 0.09 10);
-  --phase-plan: oklch(0.65 0.12 30);
-  --phase-design: oklch(0.72 0.1 52);
-  --phase-build: oklch(0.76 0.09 88);
-  --phase-verify: oklch(0.7 0.08 135);
-  --phase-release: oklch(0.66 0.07 165);
-  --phase-operate: oklch(0.66 0.09 255);
+  --phase-ink: oklch(0.94 0.025 85);
+  --phase-focus: oklch(0.9 0.11 85);
+  --phase-discover: oklch(0.48 0.1 10);
+  --phase-plan: oklch(0.5 0.13 30);
+  --phase-design: oklch(0.5 0.11 52);
+  --phase-build: oklch(0.5 0.1 88);
+  --phase-verify: oklch(0.49 0.09 135);
+  --phase-release: oklch(0.47 0.08 165);
+  --phase-operate: oklch(0.48 0.1 255);
   --coral: var(--phase-plan);
   --rose: var(--phase-discover);
   --amber: var(--phase-design);
@@ -97,13 +99,15 @@
     --ink-soft: oklch(0.79 0.035 82);
     --line: oklch(0.39 0.055 315);
     --focus: oklch(0.84 0.15 78);
-    --phase-discover: oklch(0.68 0.09 10);
-    --phase-plan: oklch(0.65 0.12 30);
-    --phase-design: oklch(0.72 0.1 52);
-    --phase-build: oklch(0.76 0.09 88);
-    --phase-verify: oklch(0.7 0.08 135);
-    --phase-release: oklch(0.66 0.07 165);
-    --phase-operate: oklch(0.66 0.09 255);
+    --phase-ink: oklch(0.94 0.025 85);
+    --phase-focus: oklch(0.9 0.11 85);
+    --phase-discover: oklch(0.48 0.1 10);
+    --phase-plan: oklch(0.5 0.13 30);
+    --phase-design: oklch(0.5 0.11 52);
+    --phase-build: oklch(0.5 0.1 88);
+    --phase-verify: oklch(0.49 0.09 135);
+    --phase-release: oklch(0.47 0.08 165);
+    --phase-operate: oklch(0.48 0.1 255);
   }
 }
 

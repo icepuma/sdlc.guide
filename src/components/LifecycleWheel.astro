@@ -256,7 +256,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
 ---
 
 <section class="wheel-stage" aria-labelledby="lifecycle-title">
-  <h1 class="screen-reader-only" id="lifecycle-title">Software development lifecycle</h1>
+  <h2 class="screen-reader-only" id="lifecycle-title">Software development lifecycle</h2>
   <div
     class="wheel"
     data-wheel
@@ -476,7 +476,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
       <p class="wheel__counter">
         <span data-phase-order>{`${String(initialPhase.index).padStart(2, "0")} / 07`}</span>
       </p>
-      <h2 id="wheel-heading" data-phase-name>{initialPhase.name}</h2>
+      <h3 id="wheel-heading" data-phase-name>{initialPhase.name}</h3>
       <p class="screen-reader-only" data-phase-status>
         {`${initialPhase.name}. Guides: ${initialPhase.documents.map((document) => document.abbreviation).join(" and ")}.`}
       </p>
@@ -494,7 +494,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
     }
     </style>
     <div class="wheel-fallback">
-      <h2>Software development lifecycle</h2>
+      <h3>Lifecycle phases</h3>
       <ol>
         {phases.map((phase) => (
           <li>
@@ -512,7 +512,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
           </li>
         ))}
       </ol>
-      <a href="/library/">Browse guides</a>
+      <a href="/guides/">Browse guides</a>
     </div>
   </noscript>
 </section>
@@ -687,20 +687,18 @@ window.addEventListener("hashchange", applyHash);
 
 <style>
 .wheel-stage {
+  --wheel-stage-padding: clamp(var(--space-sm), 2vmin, var(--space-md));
   display: grid;
   width: 100%;
   min-height: 0;
   place-items: center;
-  padding: clamp(var(--space-sm), 2vmin, var(--space-md))
-    max(var(--page-gutter), env(safe-area-inset-right))
-    clamp(var(--space-sm), 2vmin, var(--space-md))
-    max(var(--page-gutter), env(safe-area-inset-left));
+  padding-block: var(--wheel-stage-padding);
   container-name: lifecycle-stage;
-  container-type: size;
+  container-type: inline-size;
 }
 
 .wheel {
-  --wheel-size: min(87vw, calc(100svh - 12rem), 46rem);
+  --wheel-size: 46rem;
   --wheel-hit-size: clamp(var(--control-size), 13cqw, 4.75rem);
   --wheel-hub-gap: clamp(0.35rem, 0.8cqw, 0.55rem);
   --wheel-hub-number-size: clamp(0.56rem, 1.45cqw, 0.72rem);
@@ -719,9 +717,32 @@ window.addEventListener("hashchange", applyHash);
   container-type: inline-size;
 }
 
-@supports (height: 1cqh) {
+@supports (width: 1cqw) {
   .wheel {
-    --wheel-size: min(87vw, calc(100cqh - var(--space-xl)), 46rem);
+    --wheel-size: min(100cqw, 46rem);
+  }
+}
+
+@media (min-width: 64rem) {
+  .wheel {
+    --wheel-available-height: calc(
+      100svh -
+      var(--control-size) -
+      max(var(--space-lg), env(safe-area-inset-top)) -
+      var(--space-2xl) -
+      env(safe-area-inset-bottom) -
+      var(--atlas-block-padding) -
+      var(--atlas-block-padding) -
+      var(--wheel-stage-padding) -
+      var(--wheel-stage-padding)
+    );
+    --wheel-size: min(var(--wheel-available-height), 46rem);
+  }
+
+  @supports (width: 1cqw) {
+    .wheel {
+      --wheel-size: min(100cqw, var(--wheel-available-height), 46rem);
+    }
   }
 }
 
@@ -983,7 +1004,7 @@ window.addEventListener("hashchange", applyHash);
   line-height: var(--line-height-label);
 }
 
-.wheel__center h2 {
+.wheel__center h3 {
   margin: 0;
   font-size: var(--wheel-hub-title-size);
   font-weight: var(--font-weight-bold);
@@ -996,7 +1017,7 @@ window.addEventListener("hashchange", applyHash);
   padding: var(--space-xl) 0;
 }
 
-.wheel-fallback h2 {
+.wheel-fallback h3 {
   margin-block-end: var(--space-lg);
 }
 

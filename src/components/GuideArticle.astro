@@ -22,6 +22,8 @@ const relatedGuides = await getEntries(data.related.map((related) => related.gui
       <ol class="guide-article__breadcrumbs">
         <li><a href={lifecycleHref}>Lifecycle</a></li>
         <li aria-hidden="true">/</li>
+        <li><a href="/guides/">Guides</a></li>
+        <li aria-hidden="true">/</li>
         <li aria-current="page">{data.abbreviation}</li>
       </ol>
     </nav>
