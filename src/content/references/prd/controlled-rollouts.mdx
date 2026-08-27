@@ -1,0 +1,83 @@
+---
+guide: prd
+slug: controlled-rollouts
+title: Controlled rollout evidence
+description: A practical decision record for comparative experiments and staged rollouts, with stable assignment, usable evidence, and clear pause authority.
+order: 2
+sources:
+  - label: Google SRE — Canarying Releases
+    citationLabel: Google SRE canarying guide
+    supports: Concurrent canary/control comparison, representative evaluation, attributable metrics, and staged exposure.
+    url: https://sre.google/workbook/canarying-releases/
+  - label: Microsoft — Safe deployment practices
+    citationLabel: Microsoft safe-deployment guidance
+    supports: Progressive exposure, health gates, bake time, stopping a rollout when issues are detected, and recovery.
+    url: https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/safe-deployments
+  - label: FDA — Adaptive Design Clinical Trials for Drugs and Biologics Guidance for Industry (December 2019)
+    citationLabel: FDA adaptive-design guidance
+    supports: An analogy for deciding adaptation rules before evidence is observed; it is not a software rollout standard.
+    url: https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adaptive-design-clinical-trials-drugs-and-biologics-guidance-industry
+---
+
+## Use this when production evidence changes the decision
+
+Use a controlled rollout when a product change needs real-use evidence before broad release. A credible causal design—often a concurrent comparison with stable assignment—can test whether the change caused a product outcome. A measured staged rollout can grow exposure while it tests operational safety. Without a suitable concurrent comparison or another credible causal design, a rollout can show operational safety but does not by itself establish that the change caused a product outcome.
+
+Do not use this reference to make a decided release look measured. It does not replace accessibility, security, privacy, legal, or pre-release acceptance work. If a change can cause unacceptable harm, effective controls come first. Google describes a canary as a partial, time-limited deployment evaluated against a control. [Its guidance](https://sre.google/workbook/canarying-releases/) is a useful operational starting point.
+
+The trigger is a decision that could change after observing production evidence: expand, hold, alter, or stop. State the question in plain language. If the team would take the same action regardless of the result, do not run the comparison.
+
+## Register the decision plan before exposure
+
+Before the first eligible person is exposed, publish a short decision plan. Name the change and release configuration, question, eligible population and exclusions, assignment unit, exposure cap, evaluation window, stages, primary outcome, guardrails, data-quality checks, review dates, and the action each result supports.
+
+Keep the plan proportionate. One primary outcome and a few decisive guardrails are better than a large dashboard. Define each measure's population, event, time window, denominator, source, and owner. State what makes evidence insufficient: missing assignment data, event delay, an unclosed outcome window, or failed reconciliation. Name the decision authority, pause authority, and evidence owner.
+
+Set these rules before outcome evidence is visible. [FDA adaptive-design guidance](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adaptive-design-clinical-trials-drugs-and-biologics-guidance-industry) is only an analogy: decide how evidence changes a decision before seeing it. It is **not** a software rollout standard. A later change needs a new plan version, a reason, and a statement that the original rule no longer applies.
+
+## Keep assignment stable and interpretable
+
+Choose the unit that matches the question: person, account, organisation, device, session, attempt, or region. Keep it in the assigned experience for the needed period. Do not switch an unfinished checkout attempt. Record the assignment rule and version, actual exposure, and release configuration.
+
+Stable assignment is not random assignment. Selecting one region, device type, or customer tier may be the right safety choice, but groups can differ for unrelated reasons. State that limit and avoid unsupported causal claims. Keep the control meaningful and watch for shared dependencies. [Google warns](https://sre.google/workbook/canarying-releases/) that imperfect isolation can confuse a canary/control comparison.
+
+## Measure outcome, harm, operations, and evidence quality
+
+Use four measure classes:
+
+- **Primary outcome** — the direct user or business result.
+- **Harm guardrails** — security, privacy, accessibility, payment, fraud, or serious user harm that prohibits expansion.
+- **Operational guardrails** — reliability, latency, support, cost, fulfilment, or recovery signals.
+- **Data-quality checks** — assignment coverage, event completeness, schema changes, late or duplicate events, reconciliation, and final-outcome coverage.
+
+Measure absolute health and the exposed/control comparison. A quiet alert stream is not safety evidence when relevant telemetry is missing. Historical baselines help planning but are vulnerable to traffic, season, campaign, and other changes. Concurrent controls reduce that risk; they do not remove it.
+
+Treat material outcomes as provisional until the observation window closes and the authoritative system reconciles them. Payment, support, and fraud results can arrive late. Track event time separately from ingestion time and mark late or corrected data. Do not overwrite reviewed analysis: record the correction, its scope, and whether it reopens the gate.
+
+## Use simple stages and explicit authority
+
+There is no universal rollout percentage or bake time. Start with the smallest exposure that can reveal critical failure, then use an exposure and duration that represent relevant contexts and delayed outcomes. Microsoft recommends progressive exposure, health checks before each phase, sufficient bake time, and an immediate halt with recovery. [Its guidance](https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/safe-deployments) is useful for the operational side.
+
+| Stage | Minimum evidence | Decision |
+| --- | --- | --- |
+| Before exposure | Approved plan, release configuration, acceptance checks, monitoring, and a tested pause path | Start, or do not start |
+| Initial exposure | Critical health and data-quality checks pass for the declared window | Expand, hold, or stop |
+| Each later stage | Registered outcome and guardrails are complete enough for the planned decision; no open pause | Expand, hold, alter, or stop |
+| Outcome review | Final window, reconciliation, corrections, and residual risk are reviewed | Broaden, continue limited use, or stop |
+
+The pause authority may halt new exposure for a guardrail breach, missing critical evidence, or material operational risk. Re-enabling or expanding needs the named decision authority and fresh recovery evidence. State what a pause does to enrolled people, queued work, and incomplete transactions; “turn off the flag” is not always a safe recovery plan.
+
+## Keep acceptance evidence reviewable
+
+The PRD should link to the decision plan, versioned release configuration, assignment and measurement checks, analysis record, review outcome, and pause/recovery runbook. This proves the team can make a measured decision. It does not promise a better outcome before exposure.
+
+Keep enough approved, traceable evidence to answer: what changed, who saw what, which data supported the decision, and who made it. A new configuration, population rule, or measure that changes the question materially starts a new evidence version; do not combine incompatible cohorts.
+
+## Common mistakes
+
+- Calling a before-and-after comparison a control.
+- Changing assignment, measures, thresholds, or eligibility after a favourable early result.
+- Using a cohort that cannot cover relevant journeys, load, or delayed outcomes.
+- Measuring only average improvement and missing serious harm.
+- Treating incomplete, late, or unreconciled events as final.
+- Letting a feature flag stand in for a tested recovery path.

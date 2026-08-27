@@ -1,0 +1,70 @@
+---
+guide: rfc
+slug: signed-webhooks
+title: Signed webhook ingress
+description: A focused contract for accepting, authenticating, recording, and safely acknowledging signed webhook deliveries.
+order: 1
+sources:
+  - label: Stripe — Webhooks
+    citationLabel: Stripe webhook delivery guide
+    supports: Delivery retries, duplicate events, signed timestamps, and prompt successful acknowledgement.
+    url: https://docs.stripe.com/webhooks
+  - label: Stripe — Resolve webhook signature verification errors
+    citationLabel: Stripe signature-verification guide
+    supports: Verification over the unmodified request body and endpoint-specific secrets.
+    url: https://docs.stripe.com/webhooks/signature
+  - label: GitHub Docs — Validating webhook deliveries
+    citationLabel: GitHub webhook-validation guide
+    supports: HMAC-SHA-256 verification, protected payload content, and constant-time comparison.
+    url: https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+  - label: "RFC 2104 — HMAC: Keyed-Hashing for Message Authentication"
+    citationLabel: RFC 2104
+    supports: HMAC as a shared-secret message-authentication mechanism and periodic key refresh.
+    url: https://www.rfc-editor.org/rfc/rfc2104
+  - label: RFC 9421 — HTTP Message Signatures
+    citationLabel: RFC 9421
+    supports: Explicit signature components, signature parameters, and key identifiers.
+    url: https://www.rfc-editor.org/rfc/rfc9421
+---
+
+## When this reference applies
+
+Use this reference when an external system can call an endpoint and uses a signature to authenticate an expected integration principal. It covers the ingress boundary only: authenticate the request, make a durable receipt, and hand work to a reliable processor. It does not prescribe one signature standard, queue product, event schema, or business-action model.
+
+Each integration must name its endpoint and method; signature version and algorithm; protected bytes and headers; key, stable event, and timestamp fields; content types; limits; retry behaviour; and success response. Do not borrow a header format or tolerance from another provider. Stripe signs a timestamp and request body; GitHub sends an HMAC-SHA-256 digest in `X-Hub-Signature-256`. These are valid but distinct contracts. [Stripe documents its signed payload format](https://docs.stripe.com/webhooks#verify-official-libraries), and [GitHub documents its format](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries#validating-webhook-deliveries).
+
+## Verify the exact delivery before trusting it
+
+Capture raw request-body bytes at the trusted application boundary before JSON parsing, character conversion, decompression, reserialisation, or middleware mutation. “Raw” means the body available to the application after normal HTTP framing, not the entire network packet or header block. The upstream path must preserve the signed bytes and signature fields. Stripe warns that whitespace changes, JSON parsing, key reordering, or encoding changes break verification. [Stripe signature-verification guide](https://docs.stripe.com/webhooks/signature#check-the-request-body).
+
+First apply cheap limits: permitted method and route, streaming body bytes, header and signature-field length, read timeout, and content encoding. Reject invalid input before an unbounded buffer or parser. Forbid encodings or name them in the provider contract; never decompress then verify different bytes from those signed.
+
+Select one configured integration principal and eligible verification key from the endpoint route or a strictly parsed, bounded key selector. Verify the exact provider-defined input with the named algorithm. HMAC is shared-secret authentication, not encryption; its security depends on the secret and hash function. [RFC 2104](https://www.rfc-editor.org/rfc/rfc2104) defines it. Compare a valid-length received tag with a constant-time primitive, as GitHub recommends. [GitHub webhook-validation guide](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries#validating-webhook-deliveries).
+
+Only successful verification authenticates the configured integration principal—the holder of the selected key—not a unique sender where that key is shared. Transport TLS alone, an IP allow-list, event type, or unverified `key_id` is context, not proof. If the provider signs path, method, authority, timestamp, or content digest, verify those components exactly. Naming covered components and a key identifier avoids ambiguity; this is also the [RFC 9421](https://www.rfc-editor.org/rfc/rfc9421) model.
+
+## Freshness, replay, and rotation
+
+When a signature covers a delivery timestamp, reject it outside the documented clock-skew window. Synchronise clocks, record the accepted timestamp, and do not treat freshness as replay protection. Stripe's signed timestamp has a default five-minute tolerance, but each integration must set and test its own policy. [Stripe webhook delivery guide](https://docs.stripe.com/webhooks#preventing-replay-attacks).
+
+After authentication and freshness checks, use bounded parsing to validate media type and event schema before accepting the first delivery. In one atomic durable transaction, create or find a receipt keyed by authenticated integration principal, endpoint, and stable provider event ID, including every provider-defined uniqueness scope such as source account. Store the first signed-payload digest on that receipt and compare it atomically. The same identity and digest is a duplicate: it may receive success, but creates no further work or effect. The same identity with a different verified digest is a security or contract conflict: quarantine it, alert the owner, and preserve the original receipt. Store the signing-input digest with the delivery attempt, not as its deduplication key: a retry can have a new signed timestamp and signature. Providers can retry and duplicate; Stripe advises recording processed event IDs. [Stripe webhook delivery guide](https://docs.stripe.com/webhooks#handle-duplicate-events).
+
+Keep active and previous keys only for a documented overlap. Resolve a key ID to its integration principal and endpoint; do not try every stored key. Record the key version. Retire the previous key only after migration and the provider-specific maximum time that a delivery signed with that key can still arrive. Record how automatic retries and manual resends are re-signed or otherwise verified after rotation. HMAC guidance recommends periodic key refresh, but rotation must allow legitimate in-flight deliveries. [RFC 2104](https://www.rfc-editor.org/rfc/rfc2104).
+
+## Make acknowledgement a durable boundary
+
+The successful transaction stores the immutable receipt, verified raw payload or protected retrievable copy, integration principal, event ID, timestamp, key version, digest, and processing state. It also creates one durable work item or outbox record. Then return the provider's documented success response. This page ends at that acknowledgement boundary; [reliable event processing](../reliable-event-processing/) defines downstream effect identity, retries, ordering, and unknown-result recovery. Stripe recommends a prompt `2xx` before long-running work, supporting this boundary. [Stripe webhook delivery guide](https://docs.stripe.com/webhooks#quickly-return-a-2xx-response).
+
+If the durable write is unavailable or uncertain, return a retryable failure and no success response. Do not acknowledge before persistence or run irreversible logic in the request path. A valid duplicate may return success after safely finding its matching accepted receipt. A failed signature, expired delivery, unknown key, or malformed input creates no receipt, work item, or effect. Keep responses short and neutral: do not reveal whether a key, event ID, or object exists unless required.
+
+## Essential tests and failure modes
+
+The integration test suite must prove each contract, not just a happy-path event:
+
+- A known provider test vector verifies, while one-byte body changes, changed protected headers, wrong endpoint secret, wrong algorithm, invalid encoding, and a truncated or malformed signature fail before parsing or persistence.
+- An old signed timestamp, a future timestamp beyond the allowed skew, a duplicate valid delivery with a fresh signature, and the same authenticated event ID with a changed payload digest follow their distinct policies.
+- Key rotation accepts only the named active or previous key during its overlap, rejects an unknown or retired selector, and records the key version. It never probes an unbounded key set.
+- Streaming size limits, slow reads, unsupported content encodings, invalid media types, and malformed payloads remain bounded and create no work item.
+- A simulated receipt or outbox failure returns a retryable result; a redelivered event creates one receipt and one downstream processing lineage.
+
+Common failures are verifying a parsed object instead of the signed bytes, accepting an event ID before authenticating it, treating a `2xx` response as evidence that work completed, using a timestamp without a durable replay record, and quietly accepting a signature under any available key. A signed webhook is input from a partner, not a trusted business command. Authenticate it, record it durably, then use [reliable event processing](../reliable-event-processing/) for later effects.

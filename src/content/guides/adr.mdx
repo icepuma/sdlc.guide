@@ -110,33 +110,23 @@ example:
 
 ## Context
 
-The service needs delayed jobs and retries at roughly 50 jobs per minute. The team already operates PostgreSQL but has no production experience with Redis or RabbitMQ. Adding a dedicated queue now would increase the on-call load before the current workload shows a need for it. A job record must be committed in the same PostgreSQL database transaction as the application data change that requires it.
+The service needs delayed jobs and retries at roughly 50 jobs per minute. The team already operates PostgreSQL but has no production experience with Redis or RabbitMQ. Adding a dedicated queue now would add on-call work before the workload proves that it needs one. A job record must commit in the same PostgreSQL transaction as the application change that requires it.
 
 ## Options considered
 
-We considered a PostgreSQL-backed queue, a Redis-backed queue on a managed Redis service, RabbitMQ, and synchronous processing. At the current volume, PostgreSQL is preferred because the job record can be committed with the application data in the same database transaction and the team already operates the database. A dedicated queue could provide more workload isolation and throughput, but would add a production service before those benefits are demonstrated.
+We considered a PostgreSQL-backed queue, managed Redis, RabbitMQ, and synchronous processing. At the current volume, PostgreSQL is preferred because it commits the job record with the application data and the team already operates it. A dedicated queue could provide more isolation and throughput, but would add a production service before those benefits are demonstrated.
 
 ## Decision
 
-We will use a PostgreSQL-backed job queue with a small worker library. Enqueue rejects `max_attempts < 1`; every job has an `available_at` timestamp. A claim uses one short `READ COMMITTED` transaction: it selects a queued job only when `available_at <= clock_timestamp()` and `attempt_count < max_attempts`, with `FOR UPDATE SKIP LOCKED`; its conditional update repeats those predicates, atomically changes the row to `running`, increments `attempt_count`, stores a fresh unique `claim_token`, and sets `lease_expires_at` to `clock_timestamp()` plus the documented lease duration. It commits before handler work, then reads the committed claim back and starts the handler only when exactly one current `running` row has that fresh token and an unexpired lease. After a deadlock, serialisation failure, or other aborted claim, the worker library retries the whole short transaction before handler work; a rolled-back claim does not consume an attempt. `SKIP LOCKED` lets competing workers skip unavailable row locks; priority and creation time set claim preference only, so this queue does not guarantee global FIFO or strict priority order.
+We will use a PostgreSQL-backed job queue with a small worker library. It is a deliberate fit for the current volume and operating capability, not a claim that PostgreSQL is the best queue for every workload.
 
-`attempt_count` is the number of committed claims, including a claim whose worker stops before handler work. A handler retry does not increment it; the next committed claim does. Enqueueing delayed work and returning retryable work to `queued` both calculate `available_at` from `clock_timestamp()` plus the requested delay or bounded backoff. The worker library performs each renew, succeed, retry, and fail operation as one conditional database update that requires the job ID, `state: running`, the worker’s current claim token, and `lease_expires_at > clock_timestamp()`. A zero-row result means that the worker is stale: it must not alter job state or start another external effect. On a retry or recovery, a job at `max_attempts` changes from `running` to terminal `failed`; otherwise it returns to the queued state with bounded backoff.
+The design has three non-negotiable boundaries:
 
-The recovery sweep has no claim token of its own. It reads the expired job’s current token and atomically reclaims only a row whose job ID, `state: running`, and observed token still match and whose lease has expired (`lease_expires_at <= clock_timestamp()`). A zero-row recovery update lost a race and does nothing. A successful recovery clears the expired token and lease, then either queues the job or records terminal `failed`; a later claim creates a new token.
+- Application code commits each job with the application data that requires it. A worker claims work in a short transaction, commits before handler work, and treats a lost or expired claim as stale.
+- Every external operation has a durable logical-effect key and immutable payload fingerprint. A timeout or late worker is `unknown` until reconciliation; it never creates a fresh effect by guesswork.
+- Order-sensitive effects are allowed only when the recipient enforces a monotonic fence or a durable no-effect tombstone. Local leases coordinate workers but cannot prove that a late network call did not happen.
 
-Every distinct external operation has a durable logical-effect key scoped to the logical job operation and effect name, never to a claim token. A unique-key effect record stores that key, a canonical payload fingerprint, the full immutable recipient-visible idempotency composite, the current reservation, state, and result. The composite contains the verified caller principal, intended tenant, operation, authorisation binding carried by the request, and idempotency token; non-secret stable binding IDs may represent those fields. The create-or-reserve transaction persists it before the first network write, and every retry equality-checks it. Its states are `pending`, `unknown`, `retryable`, `succeeded`, and terminal `failed`. In one committed database transaction before an external call, a worker either creates the unique effect record or, when it already exists, compare-and-swap reserves it, only while the job ID is `running`, its claim token matches, and its lease is live according to `clock_timestamp()`; the reservation records that claim token and a monotonically increasing reservation fence. No worker may call downstream unless it won that reservation compare-and-swap and, immediately before the call, completes a second conditional reservation check that repeats the job state, token, live lease, and reservation fence.
-
-After a downstream call, every effect state or result settlement—including `succeeded`, `retryable`, terminal `failed`, or `unknown`—uses a compare-and-swap that matches the logical-effect key, canonical payload fingerprint, and current reservation fence. A zero-row settlement is stale: append an observation or audit record for reconciliation, and never overwrite the current effect state or result.
-
-Only `succeeded` and terminal `failed` return a stored result for the same key and fingerprint, without another effect. `pending`, `unknown`, and `retryable` first reconcile with the downstream system by that key. A policy-approved retry may then reserve and issue the exact same key and fingerprint only after reconciliation establishes that it is safe; the same key with a different fingerprint fails. Pass the key to every downstream service and, where supported, the monotonically increasing reservation fence so the receiver can reject an obsolete claimant.
-
-A local lease cannot stop a worker that pauses after its final check from making a late call. A terminal job state is therefore not proof that no effect occurred: treat such a call as `unknown` until reconciliation. Downstream idempotency is required to deduplicate every late call; downstream fencing is required where the receiver can enforce it. A receiver that cannot retain the key or enforce the documented policy for the full horizon must not receive a blind automatic or manual retry: reconcile the late effect or handle its recovery manually. Retain the key, fingerprint, full recipient-visible composite, reservation history, state, and result for at least the affected resource lifetime plus the documented maximum valid late-arrival and manual-recovery horizon. Downstream idempotency and fencing evidence must be retained for at least the same horizon.
-
-For every order-sensitive external effect, the local lease and reservation fence are only local scheduling controls. Before a newer effect in its ordering domain can be released, the recipient must enforce either a recipient-visible monotonic version fence or a recipient-atomic, irrevocable no-effect tombstone for the older full recipient-observable idempotency composite of verified caller principal, intended tenant, operation, the authorisation binding carried by that older request, and idempotency token. Recovery creates the tombstone only from that stored composite; a missing or mismatched field blocks newer release. The tombstone rejects every later request using that composite without an effect. An ordered recipient that supports neither mechanism is excluded from this queue design. Test the stale-late-call path: pause an older worker after its final local reservation check and before its first network write, let its lease expire and reconcile it, release the newer effect only after the recipient fence or tombstone is in place, then resume the older first request. The recipient must reject it without an effect or regression.
-
-When retry or recovery exhausts the attempt budget, the conditional transition changes the original job to terminal `failed` and preserves its final attempt count and effect history. Manual recovery leaves that terminal row and count unchanged. An operator first reconciles every `pending`, `unknown`, or `retryable` effect. If policy then permits the exact same logical effect, the operator creates a linked execution with its own explicit attempt budget and the same key and fingerprint; a recorded terminal result returns unchanged. An intentionally new effect gets a new key. The recovery sweep runs on a documented cadence shorter than the lease duration. After each successful sweep it records a durable heartbeat. An independent monitor, not the sweep itself, alerts the responsible operator when that heartbeat is late, an expired lease is not reclaimed within one cadence, the retry backlog age exceeds its service objective, or a job reaches terminal `failed`.
-
-Application code enqueues each job in the same PostgreSQL database transaction as the application data that requires it. The library schedules delayed jobs and retries from the PostgreSQL clock.
+The implementation record defines `SKIP LOCKED`, leases, retry limits, idempotent effects, recipient ordering, recovery, and monitoring. Follow the [reliable event processing reference](/design/rfc/reliable-event-processing/) for those details.
 
 ## Consequences
 
@@ -145,16 +135,18 @@ This decision favours current operational simplicity over potential future throu
 ### Easier now
 
 - We operate one fewer production system.
-- Job enqueueing is atomic with the related application write because both use the same PostgreSQL database transaction.
+- Job enqueueing is atomic with the related application write.
 - The team can use its existing PostgreSQL access controls, monitoring, backup process, and operational knowledge.
 
 ### Harder now
 
 - Queue traffic shares database capacity with application traffic and adds table-maintenance work.
 - The team must maintain and support the worker library.
-- The queue provides at-least-once delivery, so handlers must maintain durable effect records and idempotent downstream contracts.
+- The queue is at-least-once, so handlers need durable effect records and idempotent downstream contracts.
 
-## Revisit when
+## Validation and review
+
+Before production use, test atomic enqueueing, concurrent claims, crash recovery, duplicate delivery, unknown downstream results, and the late-worker ordering boundary. The implementation must show one intended effect or a reconciled unknown outcome; it must not silently retry ambiguity.
 
 If any trigger persists for seven days, or causes material impact sooner, propose a successor ADR. Keep this accepted decision text and reasoning unchanged. After an accepted successor replaces it, set this predecessor’s `Status: Superseded` and `Superseded by: ADR-XXX`; in the same coordinated update, set the successor’s `Supersedes: ADR-007`.
 

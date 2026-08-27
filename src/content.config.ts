@@ -2,11 +2,15 @@ import { defineCollection, reference } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
-const guideSource = z.object({
+const httpsUrl = z.url().refine((url) => url.startsWith("https://"), {
+  message: "Source URLs must use HTTPS",
+});
+
+const researchSource = z.object({
   label: z.string().min(1),
   citationLabel: z.string().min(1),
   supports: z.string().min(1),
-  url: z.url(),
+  url: httpsUrl,
 });
 
 const guideBase = z.object({
@@ -23,8 +27,8 @@ const guideBase = z.object({
       }),
     )
     .length(4),
-  sources: z.array(guideSource).min(1),
-  exampleSources: z.array(guideSource).default([]),
+  sources: z.array(researchSource).min(1),
+  exampleSources: z.array(researchSource).default([]),
   template: z.object({
     fileName: z.string().regex(/^[a-z0-9-]+\.md$/),
     href: z.string().regex(/^\/templates\/[a-z0-9-]+\.md$/),
@@ -97,7 +101,7 @@ const phases = defineCollection({
       .array(
         z.object({
           label: z.string().min(1),
-          url: z.url(),
+          url: httpsUrl,
         }),
       )
       .min(3)
@@ -105,4 +109,20 @@ const phases = defineCollection({
   }),
 });
 
-export const collections = { guides, phases };
+const references = defineCollection({
+  loader: glob({
+    base: "./src/content/references",
+    pattern: "**/*.mdx",
+  }),
+  schema: z.object({
+    guide: reference("guides"),
+    slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    title: z.string().min(1),
+    description: z.string().min(1),
+    order: z.number().int().positive(),
+    draft: z.boolean().default(false),
+    sources: z.array(researchSource).min(2).max(6),
+  }),
+});
+
+export const collections = { guides, phases, references };

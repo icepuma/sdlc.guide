@@ -1,0 +1,77 @@
+---
+guide: prd
+slug: payment-recovery
+title: Payment recovery and decision binding
+description: A small, provider-aware contract for creating payments, resolving uncertain outcomes, and preventing stale fraud decisions from authorising fulfilment.
+order: 1
+sources:
+  - label: Stripe — Idempotent requests
+    citationLabel: Stripe idempotent requests
+    supports: Safe retry semantics, parameter matching, and the limits of a provider idempotency layer.
+    url: https://docs.stripe.com/api/idempotent_requests
+  - label: Stripe — Receive webhook events
+    citationLabel: Stripe webhook guidance
+    supports: Signed raw-body verification, prompt acknowledgement, asynchronous event handling, and retrieval of current provider data.
+    url: https://docs.stripe.com/webhooks
+  - label: OWASP Application Security Verification Standard 5.0.0 — V2 Validation and Business Logic
+    citationLabel: OWASP ASVS 5.0.0 business logic
+    supports: Documented business rules, sequential non-bypassable flows, transaction boundaries, locking, and high-value-flow controls.
+    url: https://github.com/OWASP/ASVS/blob/v5.0.0/5.0/en/0x11-V2-Validation-and-Business-Logic.md
+  - label: PCI Security Standards Council — FAQ 1280
+    citationLabel: PCI SSC card-verification-code storage FAQ
+    supports: The prohibition on retaining card verification codes after authorisation.
+    url: https://www.pcisecuritystandards.org/faqs/1280/
+---
+
+## When to use this reference
+
+Use this reference when a change creates or recovers a payment, changes its amount or method, consumes provider events, or lets fraud controls affect completion. It is provider-neutral: keep provider-specific status names and API rules in the integration design.
+
+One intended purchase must lead to at most one completed order and one authorised fulfilment path. A timeout, duplicate event, or late review must not create a second fulfilment path or leave the customer with an unresolved second charge. Reconcile and refund or compensate any late charge from a superseded revision before treating the purchase as safely resolved.
+
+## Boundary and invariants
+
+Create one durable purchase record before calling a provider. Store its immutable order identity, money and currency, payment revision, provider account and environment, known provider-object reference, and idempotency token. Do not put card data, personal data, or a mutable client total in the token. Card details go directly to the approved provider; never retain card verification codes after authorisation, as [PCI SSC guidance](https://www.pcisecuritystandards.org/faqs/1280/) requires.
+
+A payment revision means a material change: amount, currency, payment method, provider account, or a recovery path that needs a new provider object. It is not a retry. Preserve old evidence and make the old revision unable to finalise the current order before opening a new one, but do not mistake that for proof that its provider object cannot still charge. Record how that object will be reconciled, cancelled or voided where possible, and compensated if it later succeeds.
+
+Provider idempotency is not the whole control. [Stripe records the first result for a key and rejects changed parameters](https://docs.stripe.com/api/idempotent_requests), but it can prune keys. Keep a service-side order invariant and durable evidence for the documented retry, event, and recovery horizon. The purchase record protects the order when a retry, worker, and webhook arrive together.
+
+| State or event | Minimum durable evidence | Allowed effect |
+| --- | --- | --- |
+| Payment request started | Order, revision, immutable amount and currency, provider target, request token, timestamp | Submit or retry the same request only. |
+| Provider result uncertain | Original request evidence, provider object reference if known, query attempts, reason | Do not create another order or release fulfilment. Reconcile. |
+| Payment result verified | Verified provider object, status, amount, currency, provider time, retrieval or event evidence | May progress only the matching revision. |
+| Order finalised | Matching verified payment result, a matching current fraud allow decision where policy requires one, finalisation time and authority | Create one fulfilment entitlement. |
+
+## Create, retry, and reconcile
+
+Treat a browser redirect or client callback as progress, not payment proof. Before an order becomes paid or fulfilled, the server must verify the provider result through an authenticated provider channel. For webhook intake, use the [signed webhook ingress reference](/design/rfc/signed-webhooks/); this reference starts after accepted, authenticated provider evidence.
+
+Process events idempotently: a duplicate has no new business effect, and an earlier event cannot regress a newer verified state. If uncertain, retrieve the canonical provider object and compare its amount, currency, account, and reference to the stored revision. Keep the order pending until a mismatch is explained. An unknown or mismatched object is an incident, not a reason to guess.
+
+After a timeout, query the provider using the stored reference and documented search method. Retry only when the contract says the original request did not start, or with the same semantic payload and valid idempotency protection. Escalate results that exceed the operating window. Show the customer pending, not a false failure or success.
+
+## Fraud decisions and payment revisions
+
+Every fraud decision, manual review, and disposition binds to the exact payment revision and provider object it assessed. Store the basis, policy version, actor or system, time, and result. A decision for one revision cannot authorise another.
+
+Before activating a new revision, atomically mark old open decisions and reviews as invalid for authorisation. Retain them as audit evidence. Late old-chain outcomes remain on the old revision, but cannot finalise the order or create fulfilment. Reconcile the old provider object, cancel or void it where possible, and use a completed refund or other approved compensation if it later succeeds. Do not call the purchase safely resolved until the old object is confirmed not to charge or that compensation is complete. The new revision needs a new assessment and decision ledger. This prevents an old approval from authorising a new card or amount.
+
+Do not let a fraud score alone fulfil an order. Finalisation requires the current revision's verified provider result and, where policy requires it, a current allow decision. Atomically claim finalisation so concurrent workers cannot complete twice. Fulfilment consumes that entitlement; it never infers payment success from an email, browser response, or unmatched event. Apply the relevant [OWASP ASVS 5.0.0 business-logic controls](https://github.com/OWASP/ASVS/blob/v5.0.0/5.0/en/0x11-V2-Validation-and-Business-Logic.md) to verify this contract.
+
+## Evidence for acceptance and operation
+
+Acceptance evidence shows behaviour, not only successful API calls. Test duplicate submission; timeout before and after provider processing; duplicated and out-of-order events; a wrong account or amount; a late old-revision charge or approval; a rejected new revision; and concurrent finalisation. Each must leave one correct order state and, where relevant, zero or one fulfilment entitlement.
+
+Operate a reconciliation queue for pending and anomalous results. Record queries, provider responses, decisions, operators, and timestamps. Alert on unresolved payments, mismatches, signature failures, duplicate finalisation, and decisions that do not match the active revision. A named authority approves any manual correction with its reason and evidence. Support can then explain an outcome without inventing payment success.
+
+## Common failure modes
+
+- Creating a new payment after every timeout instead of reconciling the original request.
+- Treating a client return, unsigned event, or event arrival order as authoritative payment evidence.
+- Reusing an idempotency token after changing money, currency, or the payment method.
+- Letting an old fraud approval authorise a newer payment revision.
+- Marking an order paid before verifying that the provider object belongs to the stored account, amount, currency, and revision.
+- Allowing fulfilment to run from several notifications without one finalisation claim.
+- Silently resolving a mismatch instead of retaining the evidence and routing it for review.

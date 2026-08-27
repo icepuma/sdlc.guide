@@ -1,0 +1,78 @@
+---
+guide: rfc
+slug: reliable-event-processing
+title: Reliable event processing
+description: A compact design reference for durable event receipt, retries, ordering, and safe external effects.
+order: 2
+sources:
+  - label: AWS Prescriptive Guidance — Transactional outbox pattern
+    citationLabel: AWS transactional outbox
+    supports: An atomic business-state and outbox write avoids the dual-write loss window; relays can still duplicate delivery.
+    url: https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html
+  - label: CloudEvents specification — id and source
+    citationLabel: CloudEvents id and source
+    supports: The source and id identify a distinct event and can identify a retransmitted duplicate, not a business effect.
+    url: https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#id
+  - label: IETF — RFC 9110, HTTP Semantics §9.2.2
+    citationLabel: RFC 9110 idempotency
+    supports: Idempotency concerns the intended server effect of repeated requests and enables recovery after an uncertain response.
+    url: https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2
+  - label: Stripe API reference — Idempotent requests
+    citationLabel: Stripe idempotent requests
+    supports: A concrete API example of retaining a stable idempotency key and returning the first recorded result on retry.
+    url: https://docs.stripe.com/api/idempotent_requests
+  - label: Azure Service Bus — Prevent message loss and duplicate processing
+    citationLabel: Azure Service Bus duplicate processing
+    supports: A timed-out send can have succeeded; duplicate detection does not replace idempotent consumers or ordered processing where it matters.
+    url: https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-message-loss-and-duplicates
+---
+
+## When to use this reference
+
+Use this reference when an incoming event changes local state or can cause an external effect: a payment request, email, provisioning call, notification, or downstream command. Its aim is not a magical “exactly once” label. It is a design that makes duplicate delivery, late work, and uncertain network outcomes safe enough to explain, test, and operate.
+
+Start by naming the trigger. State which authenticated producer, event type, schema version, and business condition allow work to begin. Reject input before receipt when its identity, signature, schema, size, or freshness cannot be verified. A successful acknowledgement should mean only that the event is durably accepted into the local workflow. It must not imply that every later effect has completed.
+
+## Make receipt and publication one local decision
+
+The dangerous gap is a dual write: update local business state, then publish a message; or publish first, then try to save the state. A crash between them can lose an event or create a phantom one. For inbound work, write the durable receipt and its outbox record in one local transaction. When a local business-state change produces an outbound event, write that state and its outbox record together. A separate relay reads committed outbox records and sends them onward. These are applications of the transactional-outbox boundary described by [AWS](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html).
+
+Store enough durable receipt evidence to investigate or replay safely: producer namespace, event identity, received time, schema version, canonical payload fingerprint, authentication result, and a reference to protected raw payload storage when policy permits it. Do not keep secrets merely for convenience. The relay may send an outbox record more than once, so a committed outbox is a reliable hand-off, not a duplicate-free transport.
+
+## Separate delivery identity from effect identity
+
+An event identity answers: “Is this the same delivered event?” For CloudEvents, `source` plus `id` identifies a distinct event, and a retransmission may reuse it ([CloudEvents](https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md#id)). Use that identity, scoped to a verified producer namespace, to make receipt deduplication explicit.
+
+An effect identity answers a different question: “What business effect is permitted exactly once or idempotently?” Define it from the intended operation and its scope, such as `invoice/481/collect/revision/3`, plus the recipient and a canonical payload fingerprint. Two different events can request the same effect; one event can legitimately lead to several distinct effects. Do not silently use an event ID as an effect key unless the contract proves that mapping is one-to-one.
+
+Atomically create or find one unique durable effect record per semantic-effect key before the first external call. Concurrent events that request the same effect share that record. It binds the payload fingerprint, recipient-visible idempotency key or query identity, ordering version where relevant, current attempt status, and the confirmed result. A retry repeats the same logical effect with the same key and immutable payload. A changed payload is a new decision: reject it, or give it a new explicit version and effect identity. HTTP describes idempotency as the intended server effect of repeated requests, not the absence of logs or attempts ([RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2)).
+
+## Prevent stale work from winning
+
+Workers need a short-lived claim or lease so they do not process the same record simultaneously. Treat it as local scheduling only. A worker can pause after its last local check, lose its lease, and later send an old request. For effects where order matters, the recipient must help.
+
+Use a recipient-enforced monotonic fence when the recipient can compare versions and reject an older one. Alternatively, use a recipient-side tombstone: a durable record that says a specified older effect identity can never produce an effect. Both controls stop a late old request where it matters—at the recipient—not merely in the queue. Define the ordering domain, version source, rejection response, and retention horizon. If a recipient supports neither control, do not claim strict order; redesign the interaction or make the consequence safely commutative.
+
+## Treat timeouts as unknown, not failed
+
+After a connection break or timeout, the sender often cannot know whether the recipient acted. Record `unknown` (or an equivalent pending-reconciliation state), then query the recipient by its stable key, correlation identifier, or a documented status endpoint. Retry only after that check gives authoritative, final proof that no effect occurred, or when the recipient guarantees duplicate-safe handling with the same key. If the query cannot prove absence, keep the record `unknown` and reconcile it. Never solve ambiguity by issuing a fresh key: that turns one uncertain request into two possible effects.
+
+Some APIs persist the first result for an idempotency key and return it on a later retry; [Stripe’s documented behaviour](https://docs.stripe.com/api/idempotent_requests) is a useful example, not a universal contract. Capture the actual recipient contract: key scope, payload-equality rule, retention period, error behaviour, status lookup, and whether a successful response is independently durable.
+
+## Retain enough evidence to recover
+
+Keep receipt identities, effect keys, fingerprints, recipient correlation data, and outcomes for at least the longest combination of producer retry, queue delay, recipient idempotency, operator recovery, and audit horizons. Retention shorter than a valid late arrival makes safe deduplication impossible. When data must be deleted, retain a privacy-safe digest or an irreversible duplicate marker if policy allows; otherwise block replay and document the limit.
+
+Run a backfill through the same validation, receipt, deduplication, and effect controls as live traffic. Label its origin and operator approval, rate-limit it, and measure its gaps. A backfill that bypasses the normal boundary is a second, less reliable system.
+
+## Essential tests and common failures
+
+Test the boundary, not only the happy path:
+
+- Send the same valid event concurrently and after a restart; prove one receipt and the intended effect count.
+- Crash before commit, after receipt commit, after outbox publication, and after the recipient receives the request but before the sender sees a response.
+- Deliver an old event after a newer ordered effect; prove the recipient fence or tombstone rejects it without regression.
+- Change the payload under an existing effect key; prove it fails rather than reusing a stored result.
+- Reconcile an unknown result, replay a retained event, and reject a replay beyond the documented retention boundary.
+
+Common failures are acknowledging before durable receipt, using a broker offset as a business-effect key, deleting idempotency evidence too early, treating a timeout as a failed call, and trusting local locks to enforce remote order. Azure’s guidance makes the same practical point: duplicate detection helps, but it does not replace idempotent consumers; use an ordering mechanism when per-key order matters ([Azure Service Bus](https://learn.microsoft.com/en-us/azure/service-bus-messaging/service-bus-message-loss-and-duplicates)).

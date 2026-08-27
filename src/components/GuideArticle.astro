@@ -3,6 +3,7 @@ import { getEntries } from "astro:content";
 import { lifecyclePhases } from "../data/lifecycle";
 import { type GuideEntry, guideColorVariable, guidePath } from "../lib/guides";
 import { phasePath } from "../lib/phases";
+import { getReferencesForGuide, referencePath } from "../lib/references";
 
 interface Props {
   guide: GuideEntry;
@@ -16,9 +17,23 @@ if (!phase) throw new Error(`Guide phase is missing from the lifecycle: ${data.p
 const phaseHref = phasePath(data.phase);
 const guideColor = guideColorVariable(guide);
 const relatedGuides = await getEntries(data.related.map((related) => related.guide));
+const technicalReferences = await getReferencesForGuide(guide);
 const exampleBody = guide.body?.trim();
 if (!exampleBody) throw new Error(`Guide example body is empty: ${data.slug}`);
 const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.documentMeta}\n\n${exampleBody}`;
+const sourcesByUrl = new Map<string, (typeof data.sources)[number]>();
+for (const source of [...data.sources, ...data.exampleSources]) {
+  const existing = sourcesByUrl.get(source.url);
+  if (!existing) {
+    sourcesByUrl.set(source.url, { ...source });
+  } else if (!existing.supports.includes(source.supports)) {
+    sourcesByUrl.set(source.url, {
+      ...existing,
+      supports: `${existing.supports} ${source.supports}`,
+    });
+  }
+}
+const guideSources = [...sourcesByUrl.values()];
 ---
 
 <article
@@ -62,18 +77,6 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
       ))}
     </dl>
 
-    <section class="guide-overview__research" aria-labelledby="research-title">
-      <h3 id="research-title">Research notes</h3>
-      <ul>
-        {data.sources.map((source) => (
-          <li>
-            <a href={source.url} aria-label={source.label}>{source.citationLabel}</a>
-            {` — ${source.supports}`}
-          </li>
-        ))}
-      </ul>
-    </section>
-
     <div class="guide-overview__intro">
       {data.overview.paragraphs.map((paragraph) => (
         <p>{paragraph}</p>
@@ -82,26 +85,30 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
     </div>
   </section>
 
+  {technicalReferences.length > 0 && (
+    <section class="guide-references" id="references" aria-labelledby="references-title">
+      <h2 id="references-title">Technical references</h2>
+      <p>
+        Use these only when the change needs the deeper contract. Keep the main document focused on
+        its decision.
+      </p>
+      <ul>
+        {technicalReferences.map((entry) => (
+          <li>
+            <a href={referencePath(entry)}>{entry.reference.data.title}</a>
+            <p>{entry.reference.data.description}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
   <section class="guide-example" id="wild" aria-labelledby="example-title">
     <header class="guide-example__header">
       <p>Markdown · {data.example.fileName}</p>
-      <h2 id="example-title">Full Markdown example</h2>
+      <h2 id="example-title">Compact Markdown example</h2>
     </header>
     <pre class="guide-example__code"><code>{exampleMarkdown}</code></pre>
-
-    {data.exampleSources.length > 0 && (
-      <section class="guide-example__sources" aria-labelledby="example-sources-title">
-        <h3 id="example-sources-title">Worked example sources</h3>
-        <ul>
-          {data.exampleSources.map((source) => (
-            <li>
-              <a href={source.url} aria-label={source.label}>{source.citationLabel}</a>
-              {` — ${source.supports}`}
-            </li>
-          ))}
-        </ul>
-      </section>
-    )}
   </section>
 
   <section class="guide-details" aria-labelledby="details-title">
@@ -171,22 +178,14 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
     <section aria-labelledby="guide-sources-title">
       <h2 id="guide-sources-title">Sources</h2>
       <ol>
-        {data.sources.map((source) => (
-          <li><a href={source.url}>{source.label}</a></li>
+        {guideSources.map((source) => (
+          <li>
+            <a href={source.url}>{source.label}</a>
+            {` — ${source.supports}`}
+          </li>
         ))}
       </ol>
     </section>
-
-    {data.exampleSources.length > 0 && (
-      <section aria-labelledby="guide-example-sources-title">
-        <h2 id="guide-example-sources-title">Worked example sources</h2>
-        <ol>
-          {data.exampleSources.map((source) => (
-            <li><a href={source.url}>{source.label}</a></li>
-          ))}
-        </ol>
-      </section>
-    )}
   </footer>
 </article>
 
@@ -336,7 +335,7 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
 }
 
 .guide-overview,
-.guide-example,
+.guide-references,
 .guide-details,
 .guide-article__footer {
   max-inline-size: var(--guide-prose);
@@ -344,13 +343,14 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
 }
 
 .guide-overview,
-.guide-example,
+.guide-references,
 .guide-details {
   font-size: var(--font-size-md);
 }
 
 .guide-overview > h2,
 .guide-example__header > h2,
+.guide-references > h2,
 .guide-details > h2,
 .guide-article__footer h2 {
   margin: 0;
@@ -383,33 +383,6 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
   font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-label);
   line-height: var(--line-height-label);
-}
-
-.guide-overview__research {
-  display: grid;
-  gap: var(--space-xs);
-  margin: var(--space-md) 0 0;
-  color: var(--ink-soft);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-body);
-}
-
-.guide-overview__research h3 {
-  margin: 0;
-  color: var(--guide-text);
-  font-size: inherit;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-label);
-  line-height: var(--line-height-label);
-  text-transform: uppercase;
-}
-
-.guide-overview__research ul {
-  display: grid;
-  gap: var(--space-2xs);
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
 .guide-overview dd,
@@ -481,6 +454,7 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
 
 .guide-overview a,
 .guide-example a,
+.guide-references a,
 .guide-details a,
 .guide-article__footer a {
   color: var(--ink);
@@ -494,12 +468,60 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
 }
 
 .guide-example {
+  max-inline-size: var(--container-wide);
+  margin-inline: auto;
   margin-block-start: var(--article-section-space);
+  font-size: var(--font-size-md);
   scroll-margin-block-start: var(--space-xl);
+}
+
+.guide-example__header {
+  max-inline-size: var(--guide-prose);
+  margin-inline: auto;
 }
 
 .guide-details {
   margin-block-start: var(--article-section-space);
+}
+
+.guide-references {
+  margin-block-start: var(--article-section-space);
+  padding-block: var(--space-xl);
+  border-block: 1px solid var(--line);
+}
+
+.guide-references > p {
+  max-width: 64ch;
+  margin-block-start: var(--space-sm);
+  color: var(--ink-soft);
+  line-height: var(--line-height-reading);
+}
+
+.guide-references ul {
+  display: grid;
+  gap: var(--space-lg);
+  margin: var(--space-xl) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-references li {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.guide-references li > a {
+  width: fit-content;
+  color: var(--ink);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.guide-references li > p {
+  max-width: 66ch;
+  color: var(--ink-soft);
+  line-height: var(--line-height-body);
 }
 
 .guide-example__header > p:first-child {
@@ -529,36 +551,6 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
 
 .guide-example__code code {
   font: inherit;
-}
-
-.guide-example__sources {
-  display: grid;
-  gap: var(--space-xs);
-  margin-block-start: var(--space-lg);
-  padding: var(--space-md);
-  border-inline-start: 0.2rem solid var(--guide-color);
-  background: color-mix(in oklch, var(--surface) 92%, var(--guide-color));
-  color: var(--ink-soft);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-body);
-}
-
-.guide-example__sources h3 {
-  margin: 0;
-  color: var(--guide-text);
-  font-size: inherit;
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-label);
-  line-height: var(--line-height-label);
-  text-transform: uppercase;
-}
-
-.guide-example__sources ul {
-  display: grid;
-  gap: var(--space-2xs);
-  margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
 .guide-article__footer {
@@ -619,6 +611,7 @@ const exampleMarkdown = `# ${data.example.documentTitle}\n\n${data.example.docum
   .guide-article__template a:hover,
   .guide-overview a:hover,
   .guide-example a:hover,
+  .guide-references a:hover,
   .guide-details a:hover,
   .guide-article__footer a:hover {
     color: var(--guide-text);

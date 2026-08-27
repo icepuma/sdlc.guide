@@ -10,6 +10,12 @@ import {
 export type GuideEntry = CollectionEntry<"guides">;
 export type GuideIndex = ReadonlyMap<PublishedSlug, GuideEntry>;
 
+const MAX_EXAMPLE_WORDS: Record<PublishedSlug, number> = {
+  prd: 850,
+  rfc: 950,
+  adr: 700,
+};
+
 export function guideTopic(guide: GuideEntry): PublishedTopic {
   return guide.data.phase === "plan"
     ? { phase: "plan", slug: guide.data.slug }
@@ -50,6 +56,18 @@ export async function getGuides(): Promise<GuideEntry[]> {
     }
     if (!guide.body?.trim()) {
       throw new Error(`Published guide body is empty: ${guide.data.slug}`);
+    }
+    const renderedExample = [
+      guide.data.example.documentTitle,
+      guide.data.example.documentMeta,
+      guide.body,
+    ].join(" ");
+    const exampleWords = renderedExample.trim().split(/\s+/u).length;
+    const maxExampleWords = MAX_EXAMPLE_WORDS[guide.data.slug];
+    if (exampleWords > maxExampleWords) {
+      throw new Error(
+        `Rendered guide example exceeds ${maxExampleWords} words: ${guide.data.slug} has ${exampleWords}`,
+      );
     }
     guidesByTopic.set(topicKey(guideTopic(guide)), guide);
   }

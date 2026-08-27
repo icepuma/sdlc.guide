@@ -1,0 +1,55 @@
+---
+import { render } from "astro:content";
+import ReferenceArticle from "../../../components/ReferenceArticle.astro";
+import SiteHeader from "../../../components/SiteHeader.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { getReferences, type ResolvedReference } from "../../../lib/references";
+
+interface Props {
+  entry: ResolvedReference;
+}
+
+export async function getStaticPaths() {
+  const references = await getReferences();
+
+  return references.map((entry) => ({
+    params: {
+      phase: entry.guide.data.phase,
+      slug: entry.guide.data.slug,
+      reference: entry.reference.data.slug,
+    },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry.reference);
+let previousHeading = 1;
+for (const heading of headings) {
+  if (heading.depth === 1) {
+    throw new Error(`Reference body must not contain an h1: ${entry.reference.id}`);
+  }
+  if (heading.depth > previousHeading + 1) {
+    throw new Error(
+      `Reference heading order skips from h${previousHeading} to h${heading.depth}: ${entry.reference.id}`,
+    );
+  }
+  previousHeading = heading.depth;
+}
+---
+
+<BaseLayout title={entry.reference.data.title} description={entry.reference.data.description}>
+  <div class="reference-page">
+    <SiteHeader />
+    <ReferenceArticle entry={entry}>
+      <Content />
+    </ReferenceArticle>
+  </div>
+</BaseLayout>
+
+<style>
+.reference-page {
+  min-width: 0;
+  min-height: 100%;
+}
+</style>

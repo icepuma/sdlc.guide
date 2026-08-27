@@ -1,0 +1,301 @@
+---
+import { lifecyclePhases } from "../data/lifecycle";
+import { guideColorVariable, guidePath } from "../lib/guides";
+import { phasePath } from "../lib/phases";
+import type { ResolvedReference } from "../lib/references";
+
+interface Props {
+  entry: ResolvedReference;
+}
+
+const { entry } = Astro.props;
+const { reference, guide } = entry;
+const phase = lifecyclePhases.find((candidate) => candidate.id === guide.data.phase);
+if (!phase) throw new Error(`Reference phase is missing: ${reference.id}`);
+const guideColor = guideColorVariable(guide);
+---
+
+<article
+  class="reference-article"
+  style={`--reference-color: var(${guideColor}); --reference-text: color-mix(in oklch, var(${guideColor}) 30%, var(--ink))`}
+>
+  <nav class="reference-article__breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">Lifecycle</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a href={phasePath(guide.data.phase)}>{phase.name}</a></li>
+      <li aria-hidden="true">/</li>
+      <li><a href={guidePath(guide)}>{guide.data.abbreviation}</a></li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page">{reference.data.title}</li>
+    </ol>
+  </nav>
+
+  <header class="reference-article__masthead" data-guide-mark={guide.data.abbreviation}>
+    <p class="reference-article__kicker">Technical reference · {guide.data.abbreviation}</p>
+    <h1>{reference.data.title}</h1>
+    <p class="reference-article__deck">{reference.data.description}</p>
+  </header>
+
+  <div class="reference-article__content">
+    <slot />
+  </div>
+
+  <footer class="reference-article__footer">
+    <section aria-labelledby="reference-sources-title">
+      <h2 id="reference-sources-title">Sources</h2>
+      <ol>
+        {reference.data.sources.map((source) => (
+          <li>
+            <a href={source.url}>{source.label}</a>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <a class="reference-article__back" href={guidePath(guide)}>
+      ← Back to {guide.data.abbreviation}
+    </a>
+  </footer>
+</article>
+
+<style>
+.reference-article {
+  --reference-prose: var(--article-measure);
+  width: min(100%, var(--container-wide));
+  min-width: 0;
+  margin-inline: auto;
+  padding: 0 max(var(--page-gutter), env(safe-area-inset-right))
+    max(var(--article-page-end), env(safe-area-inset-bottom))
+    max(var(--page-gutter), env(safe-area-inset-left));
+}
+
+.reference-article__breadcrumbs,
+.reference-article__masthead,
+.reference-article__content,
+.reference-article__footer {
+  max-inline-size: var(--reference-prose);
+  margin-inline: auto;
+}
+
+.reference-article__breadcrumbs {
+  padding-block-start: clamp(var(--space-sm), 2vw, var(--space-md));
+}
+
+.reference-article__breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-label);
+  list-style: none;
+}
+
+.reference-article__breadcrumbs a,
+.reference-article__back,
+.reference-article__content :global(a),
+.reference-article__footer a {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-color: var(--reference-color);
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+.reference-article__breadcrumbs a,
+.reference-article__back {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+}
+
+.reference-article__breadcrumbs li[aria-current] {
+  color: var(--reference-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.reference-article__masthead {
+  position: relative;
+  display: grid;
+  padding-block: var(--article-cover-space);
+  isolation: isolate;
+}
+
+.reference-article__masthead::before {
+  position: absolute;
+  z-index: 0;
+  inset-block-start: 0;
+  inset-inline-end: -0.04em;
+  color: var(--reference-color);
+  content: attr(data-guide-mark);
+  font-size: var(--font-size-ghost);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: 0.8;
+  opacity: 0.07;
+  pointer-events: none;
+}
+
+.reference-article__masthead > * {
+  position: relative;
+  z-index: 1;
+}
+
+.reference-article__kicker {
+  margin: 0 0 var(--space-sm);
+  color: var(--reference-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+  text-transform: uppercase;
+}
+
+.reference-article__masthead h1 {
+  max-width: 20ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+  text-wrap: balance;
+}
+
+.reference-article__deck {
+  max-width: 46ch;
+  margin: var(--space-sm) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-lead);
+}
+
+.reference-article__content {
+  color: var(--ink);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-reading);
+}
+
+.reference-article__content :global(h2),
+.reference-article__content :global(h3) {
+  color: var(--ink);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-heading);
+  line-height: var(--line-height-tight);
+  scroll-margin-block-start: var(--space-xl);
+  text-wrap: balance;
+}
+
+.reference-article__content :global(h2) {
+  margin: var(--article-section-space) 0 var(--space-md);
+  font-size: var(--font-size-section);
+}
+
+.reference-article__content :global(h3) {
+  margin: var(--article-subsection-space) 0 var(--space-sm);
+  font-size: var(--font-size-xl);
+}
+
+.reference-article__content :global(p + p) {
+  margin-block-start: var(--article-paragraph-space);
+}
+
+.reference-article__content :global(ul),
+.reference-article__content :global(ol) {
+  display: grid;
+  gap: var(--article-list-space);
+  margin: var(--space-md) 0 0;
+  padding-inline-start: var(--space-lg);
+}
+
+.reference-article__content :global(li::marker) {
+  color: var(--reference-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.reference-article__content :global(blockquote) {
+  margin: var(--space-lg) 0 0;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-lead);
+}
+
+.reference-article__content :global(table) {
+  display: block;
+  width: 100%;
+  margin-block-start: var(--space-lg);
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-body);
+}
+
+.reference-article__content :global(th),
+.reference-article__content :global(td) {
+  min-width: 10rem;
+  padding: var(--space-sm);
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+  vertical-align: top;
+}
+
+.reference-article__content :global(th) {
+  color: var(--reference-text);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.reference-article__content :global(code) {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.reference-article__content :global(pre) {
+  margin: var(--space-lg) 0 0;
+  padding: var(--space-md);
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklch, var(--surface) 94%, var(--reference-color));
+  font-family: var(--font-mono);
+  font-size: var(--font-size-code);
+  line-height: var(--line-height-code);
+}
+
+.reference-article__footer {
+  display: grid;
+  gap: var(--article-subsection-space);
+  margin-block-start: var(--article-section-space);
+  padding-block-start: var(--space-xl);
+  border-block-start: 1px solid var(--line);
+  font-size: var(--font-size-md);
+}
+
+.reference-article__footer h2 {
+  margin: 0 0 var(--space-md);
+  color: var(--ink);
+  font-size: var(--font-size-section);
+  line-height: var(--line-height-tight);
+}
+
+.reference-article__footer ol {
+  display: grid;
+  gap: var(--article-list-space);
+  margin: 0;
+  padding-inline-start: var(--space-lg);
+}
+
+@media (hover: hover) {
+  .reference-article a:hover {
+    color: var(--reference-text);
+  }
+}
+</style>
