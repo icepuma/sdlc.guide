@@ -1,0 +1,81 @@
+---
+phase: discover
+description: Learn what people need, turn evidence into clear requirements, and guide safer software decisions.
+sources:
+  - label: GOV.UK — Learning about users and their needs
+    url: https://www.gov.uk/service-manual/user-research/start-by-learning-user-needs
+  - label: NASA Systems Engineering Handbook — System Design Processes
+    url: https://www.nasa.gov/reference/4-0-system-design-processes/
+  - label: NASA Systems Engineering Handbook — Product Verification and Product Validation
+    url: https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/
+  - label: W3C — Web Content Accessibility Guidelines (WCAG) 2.2
+    url: https://www.w3.org/TR/WCAG22/
+  - label: ISO/IEC/IEEE 29148:2018 — Systems and software engineering — Life cycle processes — Requirements engineering
+    url: https://www.iso.org/standard/72089.html
+---
+
+## Purpose and boundary
+
+Requirements turn problems into shared, verifiable intent. Start with user, support, data, policy, contract, and system evidence.
+
+State needs, outcomes, constraints, and observable behaviour. [GOV.UK’s user-needs guidance](https://www.gov.uk/service-manual/user-research/start-by-learning-user-needs) says to learn needs before deciding how a service works; [NASA’s System Design Processes](https://www.nasa.gov/reference/4-0-system-design-processes/) starts with stakeholder expectations, constraints, and success criteria.
+
+In this Requirements phase, discovery does not choose a delivery plan, architecture, or release date; imposed dates are schedule constraints. It continues during Planning, exchanging evidence and questions.
+
+### What starts here, what continues, and what feeds back
+
+Record problem, users, stakeholders, constraints, assumptions, and outcome. For each requirement, record ID/revision, rationale/evidence, approval, criteria, and verification method. Trace it to need, constraints, scope, design, implementation, and evidence. [ISO/IEC/IEEE 29148:2018](https://www.iso.org/standard/72089.html) defines requirements-engineering processes and information items.
+
+Research continues throughout delivery. [GOV.UK](https://www.gov.uk/service-manual/user-research/start-by-learning-user-needs) calls for it in every phase. Record each proposed change’s revision, rationale, evidence, decision, and approved baseline. Before approval, assess needs, constraints, measures, intended use, scope, design, criteria, tests, and verification evidence; validate the proposed revision. After implementation, verify the product and validate intended use.
+
+## What happens here
+
+Start with evidence from users, operators, maintainers, administrators, support, analytics, records, policy, contracts, and constraints. Record sources and limits. A stakeholder request is input, not proof of need until research confirms it. [GOV.UK’s guidance](https://www.gov.uk/service-manual/user-research/start-by-learning-user-needs) includes people who provide and support a service.
+
+Write needs in users’ words: situation, need, and outcome. Keep them separate from solutions. “A first-time shopper needs to buy one item without creating an account” is a need; “Add a guest checkout button” is a solution.
+
+Turn needs into functional and quality requirements. Functional requirements state observable behaviour: a shopper can select guest checkout, enter details, pay, and receive confirmation. Quality requirements state an outcome and measure: an authorised support role can retrieve only approved guest-order data after the requester’s entitlement is proved, or confirmation arrives within a stated limit. Do not use “appropriate”, “secure”, or “stable” without a criterion and threshold.
+
+For a web service, target WCAG 2.2 Level AA across the complete process: all applicable Level A and AA criteria. Keep a matrix of criterion, outcome, evidence, owner, and non-applicability reason. Guest checkout may need keyboard operation (2.1.1), error identification (3.3.1), labels or instructions (3.3.2), and programmatic name, role, and value (4.1.2). Its financial transaction must meet 3.3.4 through at least one: reversible submission; checked, correctable input; or review, confirmation, and correction before final submission. A receipt email alone is insufficient; it supports reversibility only with an accessible route within a stated period. [WCAG 2.2](https://www.w3.org/TR/WCAG22/) defines these criteria and levels.
+
+Record law, security policy, provider rules, interfaces, budget, schedules, and operations as constraints, not needs. A support-lookup need derives entitlement, authorisation, data-minimisation, and audit constraints. [NASA’s System Design Processes](https://www.nasa.gov/reference/4-0-system-design-processes/) includes interfaces, regulation, and budget. Give assumptions and questions an owner and resolution evidence.
+
+Give each requirement a statement, criteria, evidence links, and a method: test, analysis, inspection, demonstration, or a justified combination. Verification shows specified requirements; validation shows intended use. Both can use those methods. Without verifiable evidence, a requirement is incomplete. [NASA’s guidance](https://www.nasa.gov/reference/4-0-system-design-processes/) emphasises clear, unambiguous, traceable requirements; its [verification and validation guidance](https://www.nasa.gov/reference/2-4-distinctions-between-product-verification-and-product-validation/) makes this distinction.
+
+### Who owns what
+
+A product lead owns the problem, boundary, version history, and decision record. Researchers gather user and service-operation evidence; designers clarify journeys and accessibility needs; engineers explain constraints, dependencies, security, and cost; quality and security specialists make criteria testable and risk-aware.
+
+Name one decision authority to resolve conflicts, approve baselines and material changes, and record decisions. One person owns the record; shared ownership means visible review, not endless approval.
+
+## Start with and leave with
+
+Start with a reported problem, research, metrics, support records, an opportunity, policy change, or incident. State incomplete evidence. A small research plan is better than treating a request as fact.
+
+Leave with a reviewable record of needs, outcome, boundaries, requirements, constraints, assumptions, dependencies, criteria, measures, verification, versions, approvals, and evidence. Use the [PRD](/plan/prd/) for a shared product decision and its [PRD template](/templates/prd-template.md) to start.
+
+### Ready to continue, pause, or revisit when
+
+Start or continue [Planning](/plan/) when the team can state the problem and outcome without unexplained solution language, the decision authority has resolved or accepted high-priority conflicts, and each high-risk requirement has criteria and a verification method or named, time-bounded plan before an irreversible decision. Name open questions, dependencies, assumptions, owners, measures, and harms.
+
+Do not wait for certainty. Move when uncertainty is visible, bounded, and safe to explore; pause when evidence conflicts, a critical constraint is unknown, or the outcome cannot be measured.
+
+## Common mistakes
+
+Teams often start with a feature request and never test the need. They combine needs, preferences, and technical choices, so no one knows what may change. They write “easy”, “fast”, or “secure” without measures. They leave accessibility, privacy, recovery, support, and operations until change is costly.
+
+Do not call a backlog item a requirement when it lacks evidence, criteria, owner, revision, or verification method. Without traceability, it is hard to review and easy to lose. Keep the record short, but link research, decisions, and verification evidence.
+
+## Illustrative guest checkout
+
+*This fictional example uses invented names, figures, dates, and thresholds.*
+
+Support and completion data show that first-time shoppers leave when the store requires an account. Research says some want a one-off purchase; research with support staff shows that they need guest-order lookup for an authorised request. The record supports guest purchase and returning-customer sign-in, while treating support lookup as a separate service-operation need.
+
+The team gives each item an ID and revision. Requirements cover guest selection, data, confirmation, authorised lookup, returning-account checkout, accessibility, payment recovery, fraud, and events. The PRD defines fraud and completion measures. The access policy defines proof of requester entitlement and permitted support purpose for each order; it denies by default, checks authorisation server-side for every lookup, returns only the minimum approved data, and records an audit trail. Negative tests prove unauthorised and non-entitled requests cannot retrieve an order. The decision authority approves the policy and criteria; engineering explores and implements the mechanism.
+
+The WCAG matrix covers Level AA throughout the guest journey. Before payment, shoppers review, confirm, and correct information; email is separate. Requirements link to research, policy, constraints, and verification evidence. Changes follow the stated control: impact analysis and validation precede approval; product verification and intended-use validation follow implementation. Planning defines scope, owners, dependencies, measures, and release constraints/readiness; it does not decide safe release or exposure.
+
+## Continue with
+
+Continue with [Planning](/plan/) to turn requirements into owned work, measures, risks, and a go, pause, or stop decision. Use the [PRD](/plan/prd/) for a reviewable product decision. Revisit Requirements whenever [Maintenance](/operate/) reveals needs, failures, or constraints.

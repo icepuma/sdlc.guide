@@ -1,0 +1,42 @@
+---
+import { render } from "astro:content";
+import PhaseArticle from "../../components/PhaseArticle.astro";
+import SiteHeader from "../../components/SiteHeader.astro";
+import { lifecyclePhases } from "../../data/lifecycle";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getPhases, type PhaseEntry } from "../../lib/phases";
+
+interface Props {
+  phase: PhaseEntry;
+}
+
+export async function getStaticPaths() {
+  const phases = await getPhases();
+
+  return phases.map((phase) => ({
+    params: { phase: phase.data.phase },
+    props: { phase },
+  }));
+}
+
+const { phase } = Astro.props;
+const lifecyclePhase = lifecyclePhases.find((candidate) => candidate.id === phase.data.phase);
+if (!lifecyclePhase) throw new Error(`Lifecycle phase is missing: ${phase.data.phase}`);
+const { Content } = await render(phase);
+---
+
+<BaseLayout title={lifecyclePhase.name} description={phase.data.description}>
+  <div class="phase-page">
+    <SiteHeader />
+    <PhaseArticle phase={phase}>
+      <Content />
+    </PhaseArticle>
+  </div>
+</BaseLayout>
+
+<style>
+.phase-page {
+  min-width: 0;
+  min-height: 100%;
+}
+</style>

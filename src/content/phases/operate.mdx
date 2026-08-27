@@ -1,0 +1,67 @@
+---
+phase: operate
+description: Keep live software reliable, safe, useful, and ready to improve or retire based on evidence.
+sources:
+  - label: Google SRE Workbook — Monitoring
+    url: https://sre.google/workbook/monitoring/
+  - label: Google SRE Book — Service Level Objectives
+    url: https://sre.google/sre-book/service-level-objectives/
+  - label: "NIST SP 800-61 Rev. 3 — Incident Response Recommendations and Considerations for Cybersecurity Risk Management: A CSF 2.0 Community Profile"
+    url: https://csrc.nist.gov/pubs/sp/800/61/r3/final
+  - label: CISA — Known Exploited Vulnerabilities Catalog
+    url: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+  - label: NCSC — Decommissioning assets
+    url: https://www.ncsc.gov.uk/guidance/decommissioning-assets
+---
+
+## Purpose and boundary
+
+Maintenance starts when release exposes a service to people or traffic and ends at safe retirement. [Deployment](/release/) may place an exact artefact and approved configuration into an environment before that exposure. Operations protects people and data, meets promises, and learns. Changes may revisit [Requirements](/discover/) and [Planning](/plan/); incidents can stop unsafe change, roll back, or limit traffic.
+
+### What starts here, what continues, and what feeds back
+
+Name service and data owners, on-call and support routes, incident and release authorities, and escalation. Record artefact and configuration, environment, dependencies, tested recovery or exposure-reduction, recovery assets, and health signals. Product measures outcomes; security, accessibility, privacy, and recovery continue. [Google’s SRE monitoring guidance](https://sre.google/workbook/monitoring/) supports health and diagnosis. Support evidence feeds [Requirements](/discover/).
+
+## What happens here
+
+Make promises observable. An SLI is a quantitative measure. An SLO is a target or range for a named SLI, population, method, and window. For a good/bad event or time ratio, the error budget is the SLO complement: `1 − SLO` when both are fractions, or `100% − SLO` when both are percentages. It is the permitted bad events or time. For another SLI, define allowed SLO misses and their budget. Record remaining allowance and relative burn rate. Choose user-visible measures. [Google’s SLO guidance](https://sre.google/sre-book/service-level-objectives/) recommends starting with what users care about.
+
+Page only when urgent action is required; ticket lower conditions. Page and, if needed, stop exposure for an SLO-burn threshold **or** safety, security, privacy, integrity, fraud, or payment condition. Give each alert severity, owner, impact, action, and tested delivery. Suppress duplicates visibly.
+
+Give support lookup and escalation steps; protect customer data and review themes.
+
+Prepare runbooks, an incident commander and deputy, contacts, and a status route. Within documented delegation, the commander may declare or close an incident, halt exposure or traffic, disable a flag, and authorise time-bound mitigation; the deputy takes over. A named return-to-service authority approves restoration; a named release authority approves renewed exposure. The commander cannot restart alone. [NIST SP 800-61 Rev. 3](https://csrc.nist.gov/pubs/sp/800/61/r3/final) maps Govern, Identify (all categories), and Protect to preparation; Detect to detection and analysis; Respond and Recover to containment, eradication, and recovery. Identify improvement also spans detection, response and recovery, and post-incident learning. Assess impact, preserve evidence, and record decisions and status.
+
+Inventory assets and dependencies; assess advisories by exposure and user impact; set an owner and due date. [CISA’s Known Exploited Vulnerabilities Catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) informs priority because KEVs are exploited in the wild. For each KEV, identify version, applicability, and exposure. Organisations subject to a binding directive, law, or contract must meet its current action and timeline; others set risk-policy dates but treat KEVs as high priority. Complete the listed action or documented vendor/CISA mitigation. Record compensating-control scope, expiry, owner, verification, and risk authority. Verify effectiveness: a verified patch or remediation can remove vulnerability exposure while the service remains public; only isolation or retirement removes network exposure.
+
+### Who owns what
+
+The service owner is accountable for priorities. The incident commander directs the response; on-call staff execute approved actions; return-to-service and release authorities make their named decisions. Engineering maintains health and runbooks. Product owns outcomes, Support owns service evidence, Security owns policy and threat advice, and Platform owns shared runtime capabilities. Named accountabilities need access, authority, dashboards, and escalation; test handoffs.
+
+## Start with and leave with
+
+Start with artefact, authorities, objectives, dashboards, alerts, runbooks, dependencies, support, tested rollback, roll-forward and exposure-reduction paths, recovery assets, and baselines. Reviews record health, outcomes, incidents, patch status, support themes, risks, and owners; retirement records show migration, disabled access, and retained-data ownership.
+
+### Ready to continue, pause, or revisit when
+
+An improvement is ready for the next step when it has an owner, evidence, a recorded risk decision, and a safe action. A live service has an operational baseline when health is measurable, urgent alerts have a tested route, support can help users, vulnerabilities have owners, and recovery and exposure-reduction paths are tested. Before return, contain the incident and eradicate persistence and its entry path, or record why either is not applicable. Use clean, trusted recovery assets; check them for compromise and integrity; verify backup and restored-asset integrity, restored service, and normal status; then obtain the named return-to-service authority’s approval.
+
+Retirement needs its own check. Confirm that no journey, integration, data store, operational control, or security control depends on the asset, and that retention and deletion rules are known. Test rollback before irreversible action. Unless security or compliance requires immediate removal, disable or take it offline, observe normal and peak use, and investigate activity. Keep unsanitised assets and recovery material securely held, inventoried, and tracked through each transfer; use a chain of custody where sensitivity requires it. Prove the replacement, retain agreed backups, configuration, and recovery material, then sanitise media where required. Obtain evidence that a third party sanitised or disposed of assets properly. Verify decommissioning, update inventory and evidence, and monitor effects. The [NCSC’s decommissioning guidance](https://www.ncsc.gov.uk/guidance/decommissioning-assets) covers these steps.
+
+## Common mistakes
+
+- Treating deployment as the end.
+- Paging on every symptom.
+- Leaving incident, patch, or retirement evidence incomplete.
+
+## Illustrative guest checkout
+
+*This fictional example uses invented names, figures, dates, and thresholds.*
+
+Each closed wave has pinned `rollout_key` assignment and immutable `experiment_id`, `enrolment_wave_id`, and first-enrolment membership. Treatment has the guest offer; concurrent control does not. Later attempts are diagnostic, never paired-ITT `N`. Signed-in and known returning-account customers stay on existing checkout as an external guardrail, not an arm. Watch registered treatment operational SLIs, that guardrail, and attributed support contacts. A registered deterministic stop makes @release-manager immediately pause enrolment or disable the guest offer, start communication, and preserve evidence. Only @checkout-sponsor may re-expose under the [PRD](/plan/prd/)’s sole Release gate.
+
+On day three, the registered small-screen address-error safety boundary fires. @release-manager immediately pauses enrolment and disables the guest offer for the [PRD’s sole Release gate](/plan/prd/) scope; already-started work reaches a safe, reconciled result. The incident commander then validates impact and authorises time-bound mitigation. The pause preserves `experiment_id`, `enrolment_wave_id`, configuration, time, and affected `analysis_unit_id`s. It does not change assignments, pool evidence, or outcome-close the wave. Only the registered, outcome-independent target-or-duration rule can close it. Existing checkout remains concurrent control. The on-call engineer applies versioned, reversible mitigation. After recovery proof, @checkout-sponsor alone may authorise re-exposure under the PRD gate. A later wave requires its separate PRD-gate evidence and authorisation; it uses new eligible keys and a new wave ID, and starts a new experiment only when the PRD requires it. Product, design, research, and engineering update [Requirements](/discover/) and a testable PRD need for a durable correction.
+
+## Continue with
+
+Continue from [Deployment](/release/). Return to [Requirements](/discover/) when evidence changes constraints or behaviour; use [Planning](/plan/) for outcome, owner, and risk decisions. The [PRD](/plan/prd/), [RFC](/design/rfc/), and [ADR](/design/adr/) record the response.

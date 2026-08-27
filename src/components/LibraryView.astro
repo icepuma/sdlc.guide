@@ -1,11 +1,12 @@
 ---
 import { type LifecycleDocumentId, lifecyclePhases } from "../data/lifecycle";
 import { getGuides, guidePath, indexGuides, requireGuide } from "../lib/guides";
+import { phasePath } from "../lib/phases";
 
 const guides = await getGuides();
 const guideIndex = indexGuides(guides);
 const liveGuideCount = guides.length;
-const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
+const liveGuideLabel = `${liveGuideCount} document guide${liveGuideCount === 1 ? "" : "s"}`;
 ---
 
 <section class="library-view" aria-labelledby="guides-title">
@@ -20,7 +21,7 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 
   <header class="library-view__intro">
     <h1 id="guides-title">Guides</h1>
-    <p>Lifecycle guidance, phase by phase.</p>
+    <p>Explore the phases, then use the relevant guides, templates, and examples.</p>
   </header>
 
   <ul class="library-view__grid" aria-label="Lifecycle guides by phase">
@@ -28,12 +29,15 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
       <li>
         <article class="library-view__phase" style={`--phase-color: var(${phase.colorVariable})`}>
           <h2 class="library-view__phase-label">
-            <span class="library-view__phase-marker" aria-hidden="true"></span>
-            <span>{String(phase.index).padStart(2, "0")}</span>
-            <span>{phase.name}</span>
+            <a href={phasePath(phase.id)} aria-label={`Read about ${phase.name}`}>
+              <span class="library-view__phase-marker" aria-hidden="true"></span>
+              <span>{String(phase.index).padStart(2, "0")}</span>
+              <span>{phase.name}</span>
+            </a>
           </h2>
+          <p class="library-view__phase-summary">{phase.summary}</p>
 
-          {phase.documents.length > 0 ? (
+          {phase.documents.length > 0 && (
             <ul class="library-view__guide-list">
               {phase.documents.map((documentId) => {
                 const document = requireGuide(guideIndex, documentId as LifecycleDocumentId);
@@ -51,8 +55,6 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
                 );
               })}
             </ul>
-          ) : (
-            <p class="library-view__empty">coming soon…</p>
           )}
         </article>
       </li>
@@ -65,8 +67,7 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
   width: min(100%, var(--container-wide));
   min-width: 0;
   margin-inline: auto;
-  padding: 0 max(var(--page-gutter), env(safe-area-inset-right))
-    clamp(var(--space-3xl), 8vw, var(--space-4xl))
+  padding: 0 max(var(--page-gutter), env(safe-area-inset-right)) var(--article-page-end)
     max(var(--page-gutter), env(safe-area-inset-left));
 }
 
@@ -76,7 +77,7 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
   justify-content: space-between;
   gap: var(--space-xs) var(--space-md);
   flex-wrap: wrap;
-  padding-block-start: clamp(var(--space-md), 3vw, var(--space-lg));
+  padding-block-start: clamp(var(--space-sm), 2vw, var(--space-md));
 }
 
 .library-view__breadcrumbs {
@@ -124,7 +125,7 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 
 .library-view__intro {
   max-width: 40rem;
-  padding-block: clamp(var(--space-lg), 4vw, var(--space-xl)) var(--space-lg);
+  padding-block: var(--space-xl) var(--space-lg);
 }
 
 .library-view__intro h1 {
@@ -150,15 +151,15 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 .library-view__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
-  gap: var(--space-md);
+  align-items: start;
+  gap: var(--space-lg);
 }
 
 .library-view__phase {
   --phase-color: var(--line);
   display: grid;
-  min-height: 9rem;
   align-content: start;
-  padding: var(--space-md);
+  padding: var(--space-lg);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -166,16 +167,28 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
 
 .library-view__phase-label {
   display: flex;
-  min-block-size: var(--font-size-lg);
-  align-items: center;
-  gap: var(--space-xs);
-  margin-block-end: var(--space-xs);
+  margin: 0;
   color: var(--ink-soft);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-label);
   line-height: var(--line-height-label);
-  text-transform: uppercase;
+}
+
+.library-view__phase-label a {
+  display: flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  gap: var(--space-xs);
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.library-view__phase-label a:hover {
+  color: var(--ink);
 }
 
 .library-view__phase-marker {
@@ -186,8 +199,16 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
   background: var(--phase-color);
 }
 
+.library-view__phase-summary {
+  margin-block: var(--space-xs) 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
 .library-view__guide-list {
   display: grid;
+  margin-block-start: var(--space-sm);
 }
 
 .library-view__guide-list li + li > * {
@@ -198,15 +219,14 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
   border-block-start: 1px solid color-mix(in oklch, var(--line) 55%, transparent);
 }
 
-.library-view__guide-list a,
-.library-view__empty {
+.library-view__guide-list a {
   display: flex;
   min-block-size: var(--control-size);
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
   color: var(--ink);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-label);
 }
@@ -227,16 +247,6 @@ const liveGuideLabel = `${String(liveGuideCount).padStart(2, "0")} GUIDES LIVE`;
   color: var(--phase-color);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-}
-
-.library-view__empty {
-  color: var(--ink-soft);
-  font-weight: var(--font-weight-regular);
-  opacity: 0.78;
-}
-
-.library-view__empty {
-  border-block-start: 1px solid color-mix(in oklch, var(--line) 55%, transparent);
 }
 
 @media (max-width: 26rem) {

@@ -3,122 +3,161 @@ slug: adr
 phase: design
 abbreviation: ADR
 name: Architecture decision record
-summary: Records one architecturally significant decision, its context, status, and consequences.
-tagline: A short record of why the system is this way, for the people who change it next.
+summary: Records a single architecturally significant decision, with its context, status, and consequences.
+tagline: A short record that explains why the system is this way to the people who change it next.
 order: 3
 facts:
-  - label: A.K.A.
+  - label: Also called
     value: Architecture decision record
-  - label: WRITTEN BY
-    value: Decision owner with the people making the choice
-  - label: IDEAL LENGTH
-    value: Usually one or two pages
-  - label: SHELF LIFE
-    value: Retain accepted or rejected records; supersede with a successor
+  - label: Written by
+    value: ADR steward; decision authority accepts or rejects
+  - label: Ideal length
+    value: "Nygard’s guideline: one or two pages"
+  - label: Shelf life
+    value: Keep accepted and rejected records; supersede only through an accepted successor
 sources:
-  - label: Michael Nygard's original ADR article
+  - label: Nygard — Documenting Architecture Decisions (2011)
+    citationLabel: Nygard
+    supports: Short, single-decision records with context, status, decision, consequences, and successor records.
     url: https://www.cognitect.com/blog/2011/11/15/documenting-architecture-decisions
-  - label: AWS ADR process
+  - label: AWS Prescriptive Guidance — Architectural decision record process
+    citationLabel: AWS ADR process
+    supports: The proposed-to-accepted or rejected lifecycle, record stewardship, immutability, and supersession.
     url: https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html
-  - label: Microsoft ADR guidance
-    url: https://learn.microsoft.com/en-us/azure/well-architected/architect-role/architecture-decision-record
+exampleSources:
+  - label: "PostgreSQL: Documentation: 18: SELECT — The Locking Clause"
+    citationLabel: PostgreSQL locking
+    supports: "`SKIP LOCKED` for competing queue consumers, including its intentionally inconsistent view."
+    url: https://www.postgresql.org/docs/18/sql-select.html#SQL-FOR-UPDATE-SHARE
+  - label: PostgreSQL 18 documentation — date/time functions
+    citationLabel: PostgreSQL time
+    supports: "`clock_timestamp()` is the database clock; `now()` is fixed at transaction start."
+    url: https://www.postgresql.org/docs/18/functions-datetime.html
+  - label: AWS Well-Architected — make mutating operations idempotent
+    citationLabel: AWS idempotency
+    supports: Durable atomic operation state, stable tokens, stored results, and downstream token propagation make retries safe.
+    url: https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_prevent_interaction_failure_idempotent.html
 template:
   fileName: adr-template.md
   href: /templates/adr-template.md
-  note: A lightweight decision-record template informed by Nygard, with explicit ownership, options,
-    consequences, and a review trigger.
+  note: A concise decision record template with clear stewardship, decision authority, options, consequences, and an optional review trigger.
 overview:
   paragraphs:
-    - "An architecture decision record captures one architecturally significant choice: the facts
-      and forces behind it, its status, the decision, and the consequences. The collection of ADRs
-      forms the decision log; one ADR is not itself the log."
-    - Draft the record while the choice is being made and review it before acceptance. State the
-      decision plainly and record what becomes easier, harder, or otherwise changes. Preserve
-      accepted or rejected records. If the context changes, propose a successor and mark the old ADR
-      superseded after the replacement is accepted.
-  takeaway: Record why the choice made sense under the conditions at the time.
+    - "An architecture decision record (ADR) records a single architecturally significant decision:
+      its context, status, decision, and consequences. A collection of ADRs forms the decision log;
+      one ADR is a record within that log."
+    - The ADR steward starts and maintains the proposed record, but does not gain decision authority
+      by writing it. The named decision authority accepts or rejects it after review. State the
+      decision plainly and record what becomes easier, harder, or otherwise changes. Keep accepted
+      and rejected decision text and reasoning immutable, apart from status and relationship metadata.
+    - "A Proposed ADR can change during review. Accepted is the current decision; Rejected records a
+      decision not taken. Deprecated is an accepted historical decision that must not be chosen for
+      new work, but is not a synonym for Superseded. An ADR is Superseded only when an accepted
+      successor replaces it. Do not name an unaccepted ADR in either supersession field: an accepted
+      successor may set `Supersedes`, then the earlier ADR becomes Superseded and sets `Superseded by`."
+  takeaway: Record why the decision made sense under the conditions at the time.
   useWhen:
-    - A choice affects system structure, quality attributes, dependencies, or interfaces
-    - A decision sets an engineering pattern that other work will follow
-    - A hard-to-reverse trade-off needs durable rationale and consequences
-    - An RFC or another discussion establishes an enduring architecture choice
+    - A choice affects system structure, key quality attributes, dependencies, interfaces, or construction techniques
+    - A decision establishes an engineering pattern that other work will follow
+    - A difficult-to-reverse trade-off needs durable rationale and consequences
+    - An RFC or design discussion reaches an enduring architecture decision
   skipWhen:
     - A choice is local, temporary, low-risk, or easy to reverse
-    - A current standard or policy already records the decision and rationale
-    - The team is still comparing a broad proposal — use an RFC or design document
+    - The choice only follows a current standard or policy, with no local trade-off or exception to record
+    - The team is still exploring a broad proposal; use an RFC or design document until one specific decision is ready
   anatomy:
-    - term: Number & title
-      description: A stable ID and short title that names the decision.
-    - term: Status & ownership
-      description: Proposed, accepted, rejected, deprecated, or superseded; date, owner, and deciders.
+    - term: Number and title
+      description: A sequential, never-reused ID and a short title that names the decision.
+    - term: Status, relationships, and roles
+      description: Choose one status. Include the date, ADR steward, decision authority, and links only after the named successor is accepted.
     - term: Context
       description: Factual technical, product, project, and social forces that make a decision necessary.
     - term: Options considered
-      description: Viable choices and the status quo when they are needed to understand the outcome.
+      description: Material alternatives, the status quo when useful, and the relevant trade-offs.
     - term: Decision
-      description: "A clear active-voice statement: “We will…”"
+      description: "A clear active-voice statement: “We will …”. For a rejected ADR, state what was rejected and why."
     - term: Consequences
       description: Positive, negative, and neutral effects, known risks, and follow-up work.
-    - term: Confirmation or review trigger
-      description: Optional checks for compliance or evidence that should cause a successor ADR.
+    - term: Confirmation or review trigger (optional)
+      description: A compliance check or evidence that should trigger a successor ADR.
   dos:
     - Record one architecturally significant decision per ADR
     - Use a short title and state the decision in active voice
-    - Include the factual context, viable options, rationale, and all known consequences
+    - Include the factual context and rationale, material alternatives, and all known consequences
+    - Name the ADR steward who maintains the record and the decision authority who accepts or rejects it
     - Keep the decision log in one durable place the project team can reach
-    - Preserve accepted or rejected records and link successor ADRs in both directions
+    - Preserve accepted and rejected decision text, and link successor ADRs in both directions only after acceptance
   donts:
     - Rewrite an accepted or rejected ADR to hide how the decision changed
+    - Treat the ADR steward as the decision authority merely because they wrote the record
     - Record every local implementation detail or temporary experiment
-    - Omit rejected options, rationale, negative consequences, or decision ownership
+    - Omit material alternatives, rationale, negative consequences, or decision ownership
     - Use an ADR as a broad design guide instead of a focused decision record
-    - Mark an ADR superseded before its replacement is accepted
+    - Mark an ADR as superseded, or enter a supersession link, before its replacement is accepted
 related:
   - guide: rfc
-    description: Use an RFC to explore a substantial change; create an ADR when it establishes an
-      enduring architecture choice.
+    description: Use an RFC to investigate and gain alignment on a material technical proposal. Create
+      an ADR after the decision authority makes an enduring architecture decision.
   - guide: prd
-    description: A PRD sets product intent. It may prompt an ADR, but ADRs can arise anywhere a
-      significant architecture choice is made.
+    description: A PRD records product intent and requirements. It can inform an ADR, but it does not
+      itself choose the architecture.
 example:
   fileName: adr-007-postgres-queue.md
   documentTitle: "ADR-007: PostgreSQL job queue"
-  documentMeta: "ILLUSTRATIVE EXAMPLE · status: ACCEPTED · date: 2026-03-14 · decision owner: platform
-    lead · deciders: platform team · supersedes: —"
+  documentMeta: "Illustrative example · all scenario-specific names, dates, figures, and thresholds are fictional · status: Accepted · date:
+    2026-03-14 · ADR steward: platform lead · decision authority: platform team · supersedes: none · superseded by: none"
 ---
 
-#### Context
+## Context
 
-We need delayed jobs and retries at about 50 jobs per minute. The team already operates Postgres well but has not run Redis or RabbitMQ in production. Adding a queue service now would add an on-call burden before it solves a current scale problem. Job creation must also remain transactionally coupled to application changes.
+The service needs delayed jobs and retries at roughly 50 jobs per minute. The team already operates PostgreSQL but has no production experience with Redis or RabbitMQ. Adding a dedicated queue now would increase the on-call load before the current workload shows a need for it. A job record must be committed in the same PostgreSQL database transaction as the application data change that requires it.
 
-#### Options considered
+## Options considered
 
-The team compared PostgreSQL, a managed Redis queue, RabbitMQ, and continuing with synchronous work. PostgreSQL was preferred at the current scale because it preserves transactional enqueueing and uses an operated system. A dedicated queue offers stronger isolation and throughput but adds a service and on-call responsibility before those benefits are needed.
+We considered a PostgreSQL-backed queue, a Redis-backed queue on a managed Redis service, RabbitMQ, and synchronous processing. At the current volume, PostgreSQL is preferred because the job record can be committed with the application data in the same database transaction and the team already operates the database. A dedicated queue could provide more workload isolation and throughput, but would add a production service before those benefits are demonstrated.
 
-#### Decision
+## Decision
 
-We will use PostgreSQL as the job queue, with a thin worker library that claims work through SELECT … FOR UPDATE SKIP LOCKED. The library schedules delayed jobs and retries failures; application code enqueues jobs in the same transaction as the data that created them.
+We will use a PostgreSQL-backed job queue with a small worker library. Enqueue rejects `max_attempts < 1`; every job has an `available_at` timestamp. A claim uses one short `READ COMMITTED` transaction: it selects a queued job only when `available_at <= clock_timestamp()` and `attempt_count < max_attempts`, with `FOR UPDATE SKIP LOCKED`; its conditional update repeats those predicates, atomically changes the row to `running`, increments `attempt_count`, stores a fresh unique `claim_token`, and sets `lease_expires_at` to `clock_timestamp()` plus the documented lease duration. It commits before handler work, then reads the committed claim back and starts the handler only when exactly one current `running` row has that fresh token and an unexpired lease. After a deadlock, serialisation failure, or other aborted claim, the worker library retries the whole short transaction before handler work; a rolled-back claim does not consume an attempt. `SKIP LOCKED` lets competing workers skip unavailable row locks; priority and creation time set claim preference only, so this queue does not guarantee global FIFO or strict priority order.
 
-#### Consequences · easier now
+`attempt_count` is the number of committed claims, including a claim whose worker stops before handler work. A handler retry does not increment it; the next committed claim does. Enqueueing delayed work and returning retryable work to `queued` both calculate `available_at` from `clock_timestamp()` plus the requested delay or bounded backoff. The worker library performs each renew, succeed, retry, and fail operation as one conditional database update that requires the job ID, `state: running`, the worker’s current claim token, and `lease_expires_at > clock_timestamp()`. A zero-row result means that the worker is stale: it must not alter job state or start another external effect. On a retry or recovery, a job at `max_attempts` changes from `running` to terminal `failed`; otherwise it returns to the queued state with bounded backoff.
 
-The decision deliberately trades future scale for present operational simplicity.
+The recovery sweep has no claim token of its own. It reads the expired job’s current token and atomically reclaims only a row whose job ID, `state: running`, and observed token still match and whose lease has expired (`lease_expires_at <= clock_timestamp()`). A zero-row recovery update lost a race and does nothing. A successful recovery clears the expired token and lease, then either queues the job or records terminal `failed`; a later claim creates a new token.
+
+Every distinct external operation has a durable logical-effect key scoped to the logical job operation and effect name, never to a claim token. A unique-key effect record stores that key, a canonical payload fingerprint, the full immutable recipient-visible idempotency composite, the current reservation, state, and result. The composite contains the verified caller principal, intended tenant, operation, authorisation binding carried by the request, and idempotency token; non-secret stable binding IDs may represent those fields. The create-or-reserve transaction persists it before the first network write, and every retry equality-checks it. Its states are `pending`, `unknown`, `retryable`, `succeeded`, and terminal `failed`. In one committed database transaction before an external call, a worker either creates the unique effect record or, when it already exists, compare-and-swap reserves it, only while the job ID is `running`, its claim token matches, and its lease is live according to `clock_timestamp()`; the reservation records that claim token and a monotonically increasing reservation fence. No worker may call downstream unless it won that reservation compare-and-swap and, immediately before the call, completes a second conditional reservation check that repeats the job state, token, live lease, and reservation fence.
+
+After a downstream call, every effect state or result settlement—including `succeeded`, `retryable`, terminal `failed`, or `unknown`—uses a compare-and-swap that matches the logical-effect key, canonical payload fingerprint, and current reservation fence. A zero-row settlement is stale: append an observation or audit record for reconciliation, and never overwrite the current effect state or result.
+
+Only `succeeded` and terminal `failed` return a stored result for the same key and fingerprint, without another effect. `pending`, `unknown`, and `retryable` first reconcile with the downstream system by that key. A policy-approved retry may then reserve and issue the exact same key and fingerprint only after reconciliation establishes that it is safe; the same key with a different fingerprint fails. Pass the key to every downstream service and, where supported, the monotonically increasing reservation fence so the receiver can reject an obsolete claimant.
+
+A local lease cannot stop a worker that pauses after its final check from making a late call. A terminal job state is therefore not proof that no effect occurred: treat such a call as `unknown` until reconciliation. Downstream idempotency is required to deduplicate every late call; downstream fencing is required where the receiver can enforce it. A receiver that cannot retain the key or enforce the documented policy for the full horizon must not receive a blind automatic or manual retry: reconcile the late effect or handle its recovery manually. Retain the key, fingerprint, full recipient-visible composite, reservation history, state, and result for at least the affected resource lifetime plus the documented maximum valid late-arrival and manual-recovery horizon. Downstream idempotency and fencing evidence must be retained for at least the same horizon.
+
+For every order-sensitive external effect, the local lease and reservation fence are only local scheduling controls. Before a newer effect in its ordering domain can be released, the recipient must enforce either a recipient-visible monotonic version fence or a recipient-atomic, irrevocable no-effect tombstone for the older full recipient-observable idempotency composite of verified caller principal, intended tenant, operation, the authorisation binding carried by that older request, and idempotency token. Recovery creates the tombstone only from that stored composite; a missing or mismatched field blocks newer release. The tombstone rejects every later request using that composite without an effect. An ordered recipient that supports neither mechanism is excluded from this queue design. Test the stale-late-call path: pause an older worker after its final local reservation check and before its first network write, let its lease expire and reconcile it, release the newer effect only after the recipient fence or tombstone is in place, then resume the older first request. The recipient must reject it without an effect or regression.
+
+When retry or recovery exhausts the attempt budget, the conditional transition changes the original job to terminal `failed` and preserves its final attempt count and effect history. Manual recovery leaves that terminal row and count unchanged. An operator first reconciles every `pending`, `unknown`, or `retryable` effect. If policy then permits the exact same logical effect, the operator creates a linked execution with its own explicit attempt budget and the same key and fingerprint; a recorded terminal result returns unchanged. An intentionally new effect gets a new key. The recovery sweep runs on a documented cadence shorter than the lease duration. After each successful sweep it records a durable heartbeat. An independent monitor, not the sweep itself, alerts the responsible operator when that heartbeat is late, an expired lease is not reclaimed within one cadence, the retry backlog age exceeds its service objective, or a job reaches terminal `failed`.
+
+Application code enqueues each job in the same PostgreSQL database transaction as the application data that requires it. The library schedules delayed jobs and retries from the PostgreSQL clock.
+
+## Consequences
+
+This decision favours current operational simplicity over potential future throughput and workload isolation.
+
+### Easier now
 
 - We operate one fewer production system.
-- Job enqueueing is transactional with application writes.
-- The queue uses existing Postgres backups, access controls, monitoring, and team knowledge.
+- Job enqueueing is atomic with the related application write because both use the same PostgreSQL database transaction.
+- The team can use its existing PostgreSQL access controls, monitoring, backup process, and operational knowledge.
 
-#### Consequences · harder now
+### Harder now
 
-The cost of the choice is visible and accepted.
+- Queue traffic shares database capacity with application traffic and adds table-maintenance work.
+- The team must maintain and support the worker library.
+- The queue provides at-least-once delivery, so handlers must maintain durable effect records and idempotent downstream contracts.
 
-- Queue traffic consumes database capacity and adds table-maintenance work.
-- The worker library becomes code the team must own and support.
-- At sustained load beyond the agreed service limits, a dedicated queue may become the lower-risk option.
+## Revisit when
 
-#### Revisit when
+If any trigger persists for seven days, or causes material impact sooner, propose a successor ADR. Keep this accepted decision text and reasoning unchanged. After an accepted successor replaces it, set this predecessor’s `Status: Superseded` and `Superseded by: ADR-XXX`; in the same coordinated update, set the successor’s `Supersedes: ADR-007`.
 
-If a trigger persists, propose a successor ADR. Keep this record unchanged and mark it superseded only after the replacement is accepted.
-
-- Volume approaches 500 jobs per minute.
-- Queue-table bloat, lock contention, or job latency affects normal database work.
-- The queue needs throughput or isolation that Postgres cannot provide safely.
+- Sustained volume reaches 500 jobs per minute; reassess queue latency and database impact.
+- Queue table bloat, lock contention, or job latency degrades normal database work.
+- The workload needs more throughput or isolation than the current PostgreSQL design can provide without degrading normal database work.

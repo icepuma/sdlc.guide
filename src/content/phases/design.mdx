@@ -1,0 +1,81 @@
+---
+phase: design
+description: Turn planned intent into reviewed design for users, software, and operations.
+sources:
+  - label: ISO/IEC/IEEE 42010:2022 — Architecture description
+    url: https://www.iso.org/standard/74393.html
+  - label: NIST SP 800-218 — SSDF v1.1
+    url: https://csrc.nist.gov/pubs/sp/800/218/final
+  - label: "W3C WAI — Implement accessibility: Evaluate early and regularly"
+    url: https://www.w3.org/WAI/planning-and-managing/implement/
+  - label: Regulation (EU) 2016/679 — General Data Protection Regulation (GDPR)
+    url: https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng
+  - label: "Stripe Docs — Idempotent requests"
+    url: https://docs.stripe.com/api/idempotent_requests
+---
+
+## Purpose and boundary
+
+Design turns intent into a safe approach to build, release, and operate.
+
+[ISO/IEC/IEEE 42010:2022](https://www.iso.org/standard/74393.html) specifies descriptions, viewpoints, and model kinds, not process or notation.
+
+Keep reversible choices light; focus on contracts, data, migrations, safety boundaries, and irreversible choices.
+
+### What starts here, what continues, and what feeds back
+
+[Requirements](/discover/) and [Planning](/plan/) evidence guide design; experiments can change the plan.
+
+Accessibility, privacy, security, observability, migration, and support begin before Design and continue through delivery.
+
+## What happens here
+
+Describe normal, empty, error, recovery, and interrupted journeys. [Evaluate accessibility early and regularly](https://www.w3.org/WAI/planning-and-managing/implement/): test keyboard/screen-reader use, enlarged text, translation, and slow connections.
+
+Define architecture boundaries, ownership, interfaces, inputs/outputs, errors, versions, limits, and compatibility. Define data fields, source, classification, retention, access, deletion, and audit needs.
+
+Map data flows. Identify controller or joint-controller roles by who determines purpose and means; name a controller-side owner. For joint controllers, make a transparent Article 26 arrangement that allocates duties, covers rights/information, reflects roles, and makes its essence available. It may name a data-subject contact point, but cannot prevent subjects from exercising rights against each controller. Record purpose, legal basis, people/data, recipients/roles, access, retention/deletion/backups, transfers, processor contract, and evidence. Assess Article 37 and national-law data protection officer (DPO) designation duties for controller and processor. Where designated, involve the DPO promptly in all data-protection issues and seek data protection impact assessment (DPIA) advice. Under [Regulation (EU) 2016/679 (GDPR)](https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng), the controller carries out an Article 35 DPIA before high-risk processing. It assesses necessity and proportionality, risks to rights and freedoms, and safeguards that address risk and demonstrate compliance. If residual risk is high, the controller consults the supervisory authority under Article 36 before processing; processors assist under an Article 28 contract. Internal risk acceptance cannot replace law, contract, legal basis, a DPIA, or consultation. Do not collect or release data through an unresolved flow; give it an owner, due date, and evidence plan.
+
+Design for timeouts, retries, duplicates, dependency failures, partial writes, capacity, and degradation. For each effect, define an application-owned attempt, request identity, key scope/fingerprint, provider retention, concurrency, and expiry recovery. Atomically reserve at most one final merchant order and successful capture per attempt. Give each provider operation an ID, key, fingerprint, and persisted opaque merchant reference before calling; never put personal data in a key. Retry only the documented exact key/payload; definitive failure may start a new operation. For final state or fulfilment, accept only a matched authenticated provider query or verified, signed, timestamped, replay-safe event: provider object, local operation/order, account/environment, and immutable amount/currency must match. A mismatch is `unknown`: do not finalise, fulfil, or create a new operation/effect until reconciliation. Never use a browser return as final proof. Deduplicate events, make transitions idempotent, and reject/reconcile stale or out-of-order events. Define intervention/restoration, least privilege, input validation, secret protection, and logging. Apply [NIST SSDF](https://csrc.nist.gov/pubs/sp/800/218/final) practices proportionately to risk, cost, feasibility, and applicability.
+
+Compare options with status quo. State cost, time, usability, reliability, security, privacy, and operational trade-offs. Record why the preferred option wins and what would change it.
+
+### Who owns what
+
+Make authority and boundaries explicit. Product owns outcome/scope; design owns interaction/inclusion; engineering owns feasibility, interfaces, data, and code; specialists review material risk. For each decision/risk, record owner, authority, review, due date, experiment/stop, and release proof.
+
+Authority can be a person or group. Record decision, rationale, disagreement, and residual risk. It can accept product/technical risk, not legal/contractual gates.
+
+## Start with and leave with
+
+Start with outcome, evidence, constraints, risks, measures, authority.
+
+Leave with flows/prototypes, interface/data contracts, decisions, risks, open questions, delivery route, and proof.
+
+### Ready to continue, pause, or revisit when
+
+Move into [Implementation](/build/) when behaviour, approach, material trade-offs, operations, tests, approvers, and release evidence are clear. Authorities have reviewed. Major unknowns have an owner, due date, and bounded experiment or stop. A date or owner alone does not make it ready.
+
+Do not wait for every pixel/internal name. Wait where unresolved decisions risk unsafe data handling, incompatibility, inaccessibility, or costly rework.
+
+## Common mistakes
+
+Common failures: success-only design; diagrams without contracts, data rules, or failure behaviour; mock-ups mistaken for accessibility proof. Do not leave security late, treat a provider key as order protection, or skip alternatives.
+
+Avoid hidden decisions. An [RFC](/design/rfc/) proposes a substantial change; an [ADR](/design/adr/) records an enduring decision. Use an RFC while open and an ADR when decided. Keep both short and precise.
+
+## Illustrative guest checkout
+
+*This fictional example uses invented names, figures, dates, and thresholds.*
+
+First-time shoppers buy without an account. Design maps validation errors, declines, interruptions, and authorised support lookup, balancing completion, fraud, and support cost. For address, contact details, payment token, fraud signals, and validator, it identifies roles and a controller owner; Article 28 contract, transfer, purpose, access, backup retention/deletion, and DPIA decision are release gates. A prototype fixes a mistaken account prompt; post-purchase accounts are out of scope.
+
+Each checkout has one application-owned attempt, zero or one final merchant order, and at most one successful capture. Give every provider operation an ID/key/fingerprint before calling; client/service reuse them only for that request within retention. [Stripe's idempotency contract](https://docs.stripe.com/api/idempotent_requests) shows why matching calls, concurrency, replay, and expiry matter; a key alone does not prevent duplicates. Retries repeat the key/payload; definitive failure may start a new operation/ID/key. Provider success plus local-write failure, send timeout, or uncorrelated retention expiry is `unknown`; do not create another charge, key, operation, or effect until matched server-side provider-status reconciliation establishes its outcome.
+
+The contract maps `authorised`, `captured`, `processing`, `success`, `failure`, and `unknown`, and stores provider ID/status evidence. Final state comes only from a server-side matched authenticated provider query or verified, signed, timestamped, replay-safe event, never a browser return. Events are idempotent; duplicates and stale/out-of-order events cannot regress state or create effects. Customers may receive an order-received message while pending. Define confirmation and fulfilment separately: a delayed payment keeps the order pending; order confirmation waits for provider success, and fulfilment waits for capture when a payment is authorised only. Before final financial submission, its PRD-selected WCAG 2.2 SC 3.3.4 review-and-confirm shows a non-sensitive selected-payment-method summary, order details, and correction route; never expose PAN, CVV/CVC, tokens, or secrets. A different mechanism needs formal PRD revision. Define token handling, abandoned-checkout retention/deletion, accessible error summary, and `unknown` owner.
+
+Support lookup authorises an actor for one order only through one serialised trusted-service decision. It verifies current function, data, tenant authority, and revocation generation; validates the approved IVP-issued, server-verified, single-use proof, bound to the actor, verified subject, exact order, purpose, issue/expiry time, nonce, and issuance authorisation/revocation generation; independently enforces the subject-to-order relation against the trusted order/IVP record; atomically consumes that proof; selects least fields; and discloses them. A concurrent revocation or authority-generation change wins: no consumption or disclosure. Test revoke-versus-consume concurrency and audit access. Failed, replayed, or bypassed checks return no data. Define rate/abuse controls and recovery that never bypass verification. Use a guest-specific [RFC](/design/rfc/) for payment options and [ADR](/design/adr/) for durable duplicate-payment decisions. This informs [Implementation](/build/) while leaving copy and spacing open to feedback.
+
+## Continue with
+
+Return to [Planning](/plan/) when evidence changes outcome, scope, or measures. Continue to [Implementation](/build/). Use [RFC](/design/rfc/) or [ADR](/design/adr/) for durable records. [Testing](/verify/) checks defined behaviour, risks, and evidence.

@@ -1,0 +1,94 @@
+---
+phase: plan
+description: Define the outcome, scope, evidence, ownership, measures, risks, and dependencies that prepare a software change for design.
+sources:
+  - label: GOV.UK — How the discovery phase works
+    url: https://www.gov.uk/service-manual/agile-delivery/how-the-discovery-phase-works
+  - label: NASA Systems Engineering Handbook — Crosscutting Technical Management
+    url: https://www.nasa.gov/reference/6-0-crosscutting-technical-management/
+  - label: "NIST SP 800-218 — Secure Software Development Framework (SSDF) Version 1.1: Recommendations for Mitigating the Risk of Software Vulnerabilities"
+    url: https://csrc.nist.gov/pubs/sp/800/218/final
+  - label: GOV.UK — Measuring the benefits of your service
+    url: https://www.gov.uk/service-manual/measuring-success/measuring-service-benefits
+---
+
+## Purpose and boundary
+
+Planning turns [Requirements](/discover/) evidence into a bounded outcome, testable requirements, and a decision. It records boundaries, owners, and decision-changing evidence without settling every technical choice.
+
+Dates and completed tickets show delivery, not value. For each outcome measure, record formula, fixed cohort, time window, baseline, target, source, owner, and review point. [GOV.UK’s guidance on measuring service benefits](https://www.gov.uk/service-manual/measuring-success/measuring-service-benefits) explains why a baseline is needed to tell whether a service improved.
+
+Planning sets direction to start Design, pause for evidence, or stop. It changes as the team learns.
+
+### What starts here, what continues, and what feeds back
+
+Planning uses research, support, analytics, stakeholder needs, policy constraints, and technical limits to judge an outcome. [GOV.UK says discovery establishes an understanding of users, the problem, and constraints before a team commits to building.](https://www.gov.uk/service-manual/agile-delivery/how-the-discovery-phase-works) It turns that learning into an owned, bounded decision.
+
+Requirements continue during Planning; new research, data, or policy can change the problem. Send weak evidence, unclear needs, or assumptions back for testing. Send [Design](/design/) the outcome, non-goals, constraints, requirements, measures, risks, unresolved choices, and authority.
+
+Design, Testing, Deployment, and Maintenance feed back cost, risk, observability, and outcome evidence.
+
+## What happens here
+
+Write the outcome plainly: user, intended change, and why it matters. State scope and non-goals so the next step stays reviewable.
+
+Choose an outcome measure and harm-revealing guardrails before delivery. Record formula, cohort, time window, baseline, target, source, owner, and review point. Add instrumentation, explain a proxy, or pause when the outcome cannot be measured.
+
+Name owners for outcome, risks, dependencies, and questions. Identify needed skills, budget, environments, supplier access, data, and time. [NASA’s technical-planning guidance](https://www.nasa.gov/reference/6-0-crosscutting-technical-management/) ties scope to objectives, constraints, risks, and lifecycle criteria. Apply it proportionately.
+
+Assess user, accessibility, privacy, security, reliability, legal, operational, and delivery risks early. The [NIST Secure Software Development Framework](https://csrc.nist.gov/pubs/sp/800/218/final) describes secure-development practices integrated into each SDLC. For every material risk, record effect, signal, owner, reduction, evidence, and gate consequence.
+
+End with a named-authority decision. **Go** starts Design. **Pause** needs named evidence. **Stop** means evidence, cost, risk, or competing work does not justify investment. Record decision and evidence. [GOV.UK’s benefits guidance](https://www.gov.uk/service-manual/measuring-success/measuring-service-benefits) uses evidence to decide whether to continue, stop, or change work.
+
+### Who owns what
+
+Name an outcome owner and decision authority. The former keeps outcome, scope, non-goals, and evidence current; the latter makes Go, Pause, or Stop. Research and support ground real behaviour; design and engineering identify trade-offs; analytics defines measures; security, privacy, accessibility, legal, operations, and business review risk.
+
+The outcome owner need not author every line. They arrange review, give each question an owner, and keep review points visible. Contributors challenge assumptions early.
+
+## Start with and leave with
+
+Start with user problem, research, data, stakeholder needs, performance, constraints, and dependencies. Use the [PRD guide](/plan/prd/) and [PRD template](/templates/prd-template.md) for a durable record. Link rather than copy research, dashboards, tickets, and decisions.
+
+Leave with outcome, scope, non-goals, requirements, measures, owners, dependencies, resources, risks, decision points, questions, and recorded authority decision. It gives Design and the backlog a shared basis.
+
+### Ready to continue, pause, or revisit when
+
+- Problem, outcome, and supporting evidence are clear.
+- Scope and non-goals make the next step reviewable.
+- Each measure has formula, cohort, time window, baseline, target, source, owner, and review point.
+- Risks, dependencies, resources, and questions have an owner, evidence, and next action.
+- The named decision authority has recorded a Go, Pause, or Stop rationale.
+- Design can explore the change without guessing at the outcome.
+
+Ready means visible uncertainty and known next learning, not every final answer.
+
+## Common mistakes
+
+- Starting with a feature instead of outcome and evidence.
+- Treating every request as in scope.
+- Measuring activity rather than change.
+- Leaving a rate formula, cohort, or window undefined.
+- Listing risks without owner, signal, evidence, action.
+- Treating a date as Go.
+- Ignoring new evidence.
+
+## Illustrative guest checkout
+
+*This fictional example uses invented names, figures, dates, and thresholds.*
+
+At `checkout_started`, the PRD fixes an immutable `eligibility_verdict`. Observed: 34% of eligible existing-flow attempts reaching forced sign-in with no payment-confirmed final order within 24h. That measure and support reports of unwanted sign-in support a hypothesis, not causality: forced account creation may, rather than payment or delivery friction, explain enough abandonment to test guest checkout. Alex owns the outcome, evidence, and scope. Morgan, the Planning authority, records **Go to Design**, not a release decision. Only @checkout-sponsor makes PRD release decisions. On a deterministic stop, @release-manager immediately pauses new enrolment or the guest offer; only the sponsor can authorise re-exposure after the PRD recovery proof.
+
+The defined eligible cohort is fixed at first eligible enrolment: each `analysis_unit_id` has immutable wave membership and one primary eligible attempt (`primary_analysis_attempt_id`); later attempts are diagnostic only. `STAT-1.0` defines analysis inputs and evidence: formulas, baselines, targets, waves, concurrent arms, mature per-arm `N`, planned looks, observation windows, and data finality. A registered closed wave supplies final causal outcome evidence only after its observation window and watermark, at its planned look, with a frozen reconciled as-of snapshot. `STAT-1.0` supplies evidence; the [PRD](/plan/prd/) sole Release gate decides release actions. Planning keeps only the intended outcome: an eligible shopper can complete a one-time purchase without an account.
+
+Scope includes guest choice, details, confirmation, authorised support lookup, accessibility, privacy and security, fraud and abuse, measurement, and payment recovery. It excludes social login, loyalty integration, and redesign of the returning-customer flow. Anika owns full-process accessibility proof: incomplete required proof is **Before-2% no-go**; failed WCAG approval during exposure is a **deterministic immediate pause**. Ben owns guest-data and authorised-access proof: a missing approval is **Before-2% no-go**; an unauthorised disclosure or failed or changed approval during exposure is a **deterministic immediate pause**. Chen owns payment-recovery and reconciliation proof: a duplicate order or charge, or an unknown provider result beyond its registered SLO, is a **deterministic immediate pause**. Dev owns fraud decision and harm proof: a bypass, missing decision, or registered early or long-tail fraud-harm-bound breach is a **deterministic immediate pause**; incomplete or non-harm evidence follows the PRD's registered holdback-or-stop action. Elin owns support attribution and support-safety proof: a registered harmonised order-support safety breach is a **deterministic stop**; @release-manager immediately pauses new enrolment or disables the guest offer for the affected scope, preserves in-flight work, and starts communication. An unsafe lookup is a **deterministic immediate pause**; @release-manager pauses exposure immediately. These evidence owners supply proof and report the condition; they cannot make gate decisions or pause exposure.
+
+[Design](/design/) evaluates journeys, usability, feasibility, support lookup, states, and failure handling. Use an [RFC](/design/rfc/) for a substantial technical trade-off and an [ADR](/design/adr/) for a durable architecture decision. Return to [Planning](/plan/) when evidence changes the boundary, outcome, measures, risks, or authority.
+
+## Continue with
+
+- [Requirements](/discover/) gathers evidence.
+- [Design](/design/) turns intent into reviewed choices.
+- The [PRD guide](/plan/prd/) and [PRD template](/templates/prd-template.md) provide the record.
+- [RFC](/design/rfc/) records a technical proposal.
+- [ADR](/design/adr/) records a durable decision.

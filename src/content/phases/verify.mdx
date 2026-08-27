@@ -1,0 +1,75 @@
+---
+phase: verify
+description: Learn whether a change behaves as intended, meets its quality requirements, and carries an acceptable level of residual risk before release.
+sources:
+  - label: "ISTQB® Certified Tester Foundation Level Syllabus v4.0.1"
+    url: https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf
+  - label: "ISO/IEC/IEEE 29119-2:2021 — Software and systems engineering — Software testing — Part 2: Test processes"
+    url: https://www.iso.org/standard/79428.html
+  - label: "OWASP — Application Security Verification Standard (ASVS) 5.0.0"
+    url: https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en
+  - label: "W3C — Web Content Accessibility Guidelines (WCAG) 2.2"
+    url: https://www.w3.org/TR/WCAG22/
+  - label: "Stripe — Payment Intents"
+    url: https://docs.stripe.com/payments/payment-intents
+---
+
+## Purpose and boundary
+
+Testing gives release evidence. The [ISTQB CTFL syllabus](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf) distinguishes verification—checking specified requirements—from validation—checking users’ and stakeholders’ needs in their operational environment. A checkout can meet rules yet fail validation if shoppers cannot complete it.
+
+Plan tests early, run checks while building, and bring evidence here. Tests cannot prove no defects. Make residual risk visible and give [Deployment](/release/) a known artefact with clear limits. Production monitoring complements, but does not replace, pre-release testing.
+
+### What starts here, what continues, and what feeds back
+
+Dynamic execution begins once a candidate runs in a representative environment. Static testing and analysis start earlier: review requirements, designs, interfaces, and cases for ambiguity, consistency, completeness, and testability. Agree scope, risks, data, environments, and owners. Engineers continue component and component-integration checks from [Implementation](/build/). Product, design, and research assess the need in [Requirements](/discover/) and [Planning](/plan/).
+
+Results feed back. A defect can expose an unclear requirement, missing design state, unsafe dependency, or test gap. Record it and return to [Requirements](/discover/) or [Planning](/plan/) when the intended outcome changes.
+
+## What happens here
+
+Start with risk. Identify harm, likelihood, impact, and level. Use risk analysis and control to select, prioritise, and manage testing: mitigate and monitor risks. Reanalyse after failures, scope, environment, dependency, or evidence changes; update conditions, coverage, owners, and exit criteria. The [ISTQB CTFL syllabus](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf) calls this risk-based testing. [ISO/IEC/IEEE 29119-2:2021](https://www.iso.org/standard/79428.html) describes generic test processes for all lifecycle models.
+
+Choose levels, types, and techniques separately. Component (unit), component-integration, system, system-integration, and acceptance testing are levels and can overlap. Functional and non-functional types apply at several levels; black-box, white-box, and experience-based techniques derive cases. Payment or identity changes may need end-to-end, compatibility, recovery, and third-party-failure checks. Include acceptance testing—ideally with intended users—where user, operational, contractual, or regulatory needs matter. After a fix, use confirmation testing and impact-guided regression testing for effects in the changed component, connected systems, or environment.
+
+Collect functional and non-functional evidence against acceptance criteria. Non-functional evidence can cover security, accessibility, performance, reliability, privacy, and recoverability. Use the [OWASP Application Security Verification Standard 5.0.0](https://github.com/OWASP/ASVS/tree/v5.0.0/5.0/en) to test technical security controls. For web interfaces, test keyboard operation, focus, labels, error identification, and text and non-text contrast against relevant [WCAG 2.2](https://www.w3.org/TR/WCAG22/) criteria. Selected checks cannot support a conformance claim: it needs a stated level, all applicable criteria, and conformance requirements for full pages and complete processes. For financial flows, test [WCAG 2.2 SC 3.3.4](https://www.w3.org/TR/WCAG22/#error-prevention-legal-financial-data): reversal, error checking with correction, or review, confirmation, and correction before final submission.
+
+Maintain traceability from requirements and risks to checks, results, and defects; record the build and environment. The [ISTQB CTFL syllabus](https://istqb.org/wp-content/uploads/2024/11/ISTQB_CTFL_Syllabus_v4.0.1.pdf) explains its value for coverage and impact analysis. State what was not covered. A passing check, report, or result needs the exact artefact and evidence of the observed behaviour.
+
+### Who owns what
+
+Quality is whole-team work. Engineers maintain automated checks, safe data, and known limitations. Test specialists turn risk into conditions and investigate failures. Product, design, security, privacy, operations, support, and legal specialists make concerns explicit.
+
+Name an evidence coordinator and a release decision authority; the coordinator does not accept release risk. Give each material risk an owner. The authority may accept only residual risk within its authority, never a legal, contractual, regulatory, safety, or stated no-go criterion. Record impact, mitigation, owner, review date, and reason for proceeding.
+
+## Start with and leave with
+
+Start with a stable candidate, testable criteria, decisions, risk assessment, representative data, and an integration-capable environment. Define defect severity, priority, owner, and escalation. Synthetic or masked data must preserve essential cases.
+
+Leave with a versioned artefact, concise report, traceable results, defects, waivers, and residual-risk assessment. Include failed, blocked, and skipped checks. Give [Deployment](/release/) build identity, requirements, verified health checks, limits, and decision evidence.
+
+### Ready to continue, pause, or revisit when
+
+Continue when required checks run on the intended artefact and meet agreed criteria. Each acceptance criterion has evidence, high-risk paths have coverage, and known regressions are resolved or accepted within authority. The authority knows residual risk and recovery. If a critical test is blocked, pause, reduce scope, or revisit; do not waive a no-go criterion.
+
+## Common mistakes
+
+Treating testing as a final gate creates late surprises. Feature lists miss harmful failure modes, test counts reward activity, and happy paths miss invalid input, duplicates, timeouts, partial failure, and recovery. Incorrect payments, unauthorised access, data loss, or legal breach can make release unsafe. Add a regression test for a durable lesson.
+
+## Illustrative guest checkout
+
+*This fictional example uses invented names, figures, dates, and thresholds.*
+
+The guest-checkout change begins with evidence that requiring an account may cause abandonment. Prove the full no-account rule: a guest completes a purchase with no credential, authentication factor, account identity, reusable customer profile, account lifecycle, or marketing consent. Test valid and invalid details, the unchanged account path, and an order-confirmation email with correct content and support path. Keyboard and screen-reader users complete the whole process.
+
+Prove support lookup only after the identity-verification procedure (IVP) issues an IVP proof bound to the authorised support actor, verified subject, and exact order. Test authorised, expired, bypassed, malformed, replayed, and wrong-order proofs; every denial exposes no order data and every result leaves the required audit record. Test fraud allow, hold, decline, and review; repeated, bypassed, and malformed attempts must not evade the control, and review reaches manual hand-off.
+
+Give every checkout one durable, application-owned `checkout_attempt_id`. It may produce zero or one final `merchant_order_id`; declined and abandoned attempts may have neither order nor capture. Persist the provider payment ID separately from each provider request, idempotency key, parameter fingerprint, and charge or capture identity. Reuse a provider key only for the same documented request; a key is not merchant-order protection. [Stripe’s Payment Intents guidance](https://docs.stripe.com/payments/payment-intents) similarly separates payment object, attempts, and order.
+
+Simulate timeout, duplicate submission, unavailable address service, concurrent calls, changed parameters, browser refresh and abandonment, ambiguous results, and a retry after the idempotency-key retention period expires. Reconcile an unknown result before a new side effect or logical attempt. Prove one final order and at most one successful intended capture; failed provider attempts may remain.
+
+Test the configured authoritative asynchronous path from pending to success or failure. Validate signed callbacks, reject replay, and make local transitions idempotent. Exercise duplicate, out-of-order, and redelivered callbacks, including provider success followed by local-write failure. Hold the order pending until its configured authoritative terminal state. Only that state may create final confirmation or fulfilment; an order-received message is not final confirmation. Post-purchase account offer is outside this release. With checkout, security, support, fraud, and product evidence, the authority chooses controlled rollout and recovery conditions.
+
+## Continue with
+
+Read [Implementation](/build/) for coding checks, then [Deployment](/release/) for controlled delivery and recovery. Return to [Requirements](/discover/) when user evidence changes, or [Planning](/plan/) when scope, measures, or risks need a decision. Use [PRD](/plan/prd/), [RFC](/design/rfc/), and [ADR](/design/adr/) guides for durable evidence and decisions.

@@ -1,6 +1,7 @@
 ---
 import { type LifecycleDocumentId, lifecyclePhases } from "../data/lifecycle";
 import { getGuides, guidePath, indexGuides, requireGuide } from "../lib/guides";
+import { phasePath } from "../lib/phases";
 
 const guideIndex = indexGuides(await getGuides());
 const step = 360 / lifecyclePhases.length;
@@ -206,6 +207,7 @@ const phases = lifecyclePhases.map((phase, index) => {
     labelPath: phaseLabelPath(angle),
     labelPathId: `phase-label-${phase.id}`,
     labelPoint,
+    path: phasePath(phase.id),
     documents,
   };
 });
@@ -221,7 +223,7 @@ const documentGroups = phases.map((phase) => {
     : [
         {
           id: `${phase.id}-soon`,
-          label: "COMING SOON",
+          label: "No document guides yet",
           href: "",
           placeholder: true,
         },
@@ -264,7 +266,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
     style={`--selected-color: var(${initialPhase.colorVariable}); --wheel-gap-width: ${segmentGapWidth}; --wheel-outline-width: ${segmentOutlineWidth}; --wheel-phase-label-size: ${phaseLabelFontSize}px; --wheel-document-label-size: ${documentLabelFontSize}px; --wheel-label-tracking: ${labelTracking}px; --wheel-label-weight: ${labelWeight}`}
   >
     <div class="wheel__halo" aria-hidden="true"></div>
-    <nav class="wheel__sculpture" aria-label="Lifecycle guides">
+    <nav class="wheel__sculpture" aria-label="Lifecycle map">
       <div class="wheel__art">
         <svg class="wheel__ring" viewBox="0 0 100 100">
           <title>Software development lifecycle</title>
@@ -349,7 +351,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
                     class="wheel__document-segment"
                     href={document.href}
                     tabindex="-1"
-                    aria-label={`Open the ${document.label} guide`}
+                    aria-label={`Read the ${document.label} guide`}
                     data-document-link
                     style={`--document-color: var(${document.colorVariable})`}
                   >
@@ -426,7 +428,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
                 ></path>
                 <text focusable="false">
                   <textPath href={`#${phase.labelPathId}`} startOffset="50%">
-                    {phase.name.toUpperCase()}
+                    {phase.name}
                   </textPath>
                 </text>
               </g>
@@ -445,7 +447,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
         const isSelected = phase.id === initialPhase.id;
         const availability = phase.documents.length
           ? `Guides: ${phase.documents.map((document) => document.abbreviation).join(" and ")}`
-          : "Guides coming soon";
+          : "No document guides yet";
         return (
           <div
             class="wheel__control-position"
@@ -465,6 +467,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
               data-color={`var(${phase.colorVariable})`}
               data-order={`${String(phase.index).padStart(2, "0")} / 07`}
               data-name={phase.name}
+              data-href={phase.path}
               data-status={`${phase.name}. ${availability}.`}
             ></button>
           </div>
@@ -476,7 +479,17 @@ if (!initialPhase) throw new Error("Planning phase is required");
       <p class="wheel__counter">
         <span data-phase-order>{`${String(initialPhase.index).padStart(2, "0")} / 07`}</span>
       </p>
-      <h3 id="wheel-heading" data-phase-name>{initialPhase.name}</h3>
+      <h3 id="wheel-heading">
+        <a
+          class="wheel__phase-link"
+          data-phase-link
+          data-phase-name
+          href={initialPhase.path}
+          aria-label={`Read about ${initialPhase.name}`}
+        >
+          {initialPhase.name}
+        </a>
+      </h3>
       <p class="screen-reader-only" data-phase-status>
         {`${initialPhase.name}. Guides: ${initialPhase.documents.map((document) => document.abbreviation).join(" and ")}.`}
       </p>
@@ -498,7 +511,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
       <ol>
         {phases.map((phase) => (
           <li>
-            <strong>{phase.name}</strong>
+            <a href={phase.path}><strong>{phase.name}</strong></a>
             <span>{phase.summary}</span>
             {phase.documents.length ? (
               <span class="wheel-fallback__links">
@@ -507,7 +520,7 @@ if (!initialPhase) throw new Error("Planning phase is required");
                 ))}
               </span>
             ) : (
-              <small>Coming soon…</small>
+              <small>No document guides yet.</small>
             )}
           </li>
         ))}
@@ -553,6 +566,7 @@ const documentLinkNodes = Array.from(
 );
 const order = wheel?.querySelector<HTMLElement>("[data-phase-order]");
 const name = wheel?.querySelector<HTMLElement>("[data-phase-name]");
+const phaseLink = wheel?.querySelector<HTMLAnchorElement>("[data-phase-link]");
 const status = wheel?.querySelector<HTMLElement>("[data-phase-status]");
 let keyboardFocus = false;
 
@@ -627,6 +641,10 @@ function selectPhase(
   wheel?.style.setProperty("--selected-color", control.dataset.color ?? "var(--phase-plan)");
   if (order) order.textContent = control.dataset.order ?? "";
   if (name) name.textContent = control.dataset.name ?? "";
+  if (phaseLink) {
+    phaseLink.href = control.dataset.href ?? "/plan/";
+    phaseLink.setAttribute("aria-label", `Read about ${control.dataset.name ?? "this phase"}`);
+  }
   if (status) status.textContent = control.dataset.status ?? "";
 
   if (updateHash && control.dataset.phaseId) replaceHash(control.dataset.phaseId);
@@ -723,7 +741,7 @@ window.addEventListener("hashchange", applyHash);
   }
 }
 
-@media (min-width: 64rem) {
+@media (min-width: 72rem) {
   .wheel {
     --wheel-available-height: calc(
       100svh -
@@ -1012,6 +1030,27 @@ window.addEventListener("hashchange", applyHash);
   letter-spacing: var(--letter-spacing-tight);
 }
 
+.wheel__phase-link {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.12em;
+  transition: color var(--wheel-state-duration) var(--ease-out);
+}
+
+.wheel__phase-link:hover {
+  color: var(--ink-soft);
+}
+
+.wheel__phase-link:focus-visible {
+  outline-color: var(--phase-focus);
+}
+
 .wheel-fallback {
   width: min(100%, var(--container-reading));
   padding: var(--space-xl) 0;
@@ -1046,6 +1085,9 @@ window.addEventListener("hashchange", applyHash);
 }
 
 .wheel-fallback a {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 }

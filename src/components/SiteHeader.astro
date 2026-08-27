@@ -9,9 +9,9 @@ import ThemeToggle from "./ThemeToggle.astro";
     </a>
     <span class="site-header__separator" aria-hidden="true"></span>
     <span class="site-header__tagline">
-      <span class="site-header__stage">Work In Progress</span>
+      <span class="site-header__stage">In progress</span>
       <span class="site-header__tagline-hint">
-        An opinionated SDLC built for agentic engineering teams.
+        A practical guide for teams building software with AI agents.
       </span>
     </span>
   </div>
@@ -101,7 +101,7 @@ import ThemeToggle from "./ThemeToggle.astro";
   color: var(--phase-ink);
   font-weight: var(--font-weight-regular);
   letter-spacing: 0.04em;
-  line-height: 1.5;
+  line-height: var(--line-height-label);
 }
 
 .site-header__tagline-hint {
@@ -150,19 +150,32 @@ import ThemeToggle from "./ThemeToggle.astro";
   color: var(--ink-soft);
 }
 
-@media (max-width: 47rem) {
+@media (max-width: 52rem) {
   .site-header__identity {
     flex: 0 1 auto;
     gap: var(--space-xs);
   }
 
   .site-header__separator,
-  .site-header__tagline {
+  .site-header__tagline-hint {
     display: none;
+  }
+
+  .site-header__tagline {
+    flex: 0 0 auto;
+    padding: 0;
+    overflow: visible;
+    background: transparent;
   }
 
   .site-header__actions {
     gap: var(--space-xs);
+  }
+}
+
+@media (max-width: 30rem) {
+  .site-header__tagline {
+    display: none;
   }
 }
 </style>

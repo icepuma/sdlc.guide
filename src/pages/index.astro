@@ -6,7 +6,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 <BaseLayout
   title="sdlc.guide"
-  description="Opinionated SDLC guidance for agentic engineering, helping teams and AI agents share product context."
+  description="A practical software development lifecycle guide for teams building with AI agents. Share decisions, evidence, and context."
 >
   <div class="home-page">
     <SiteHeader />
@@ -16,12 +16,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
         <h1 id="home-title">Software Development Life Cycle</h1>
         <div class="editorial-atlas__body">
           <p>
-            It follows standard SDLC definitions, shaped by hands-on experience and documents agents
-            can use, such as Markdown. It is an evolving, adaptable framework—a guide rather than a
-            fixed process.
+            This guide uses seven common phases to make software work, decisions, and evidence
+            easier to share. Teams move back and forth as they learn. It is a map, not a fixed
+            process.
           </p>
           <p class="editorial-atlas__guide-hint">
-            See the framework in practice in the <a href="/guides/">Guides</a>.
+            Explore the phases, templates, and examples in the <a href="/guides/">Guides</a>.
+          </p>
+          <p class="editorial-atlas__guide-hint">
+            <a href="https://www.iso.org/standard/90219.html">ISO/IEC/IEEE 12207:2026</a>{" "}
+            says life cycle processes can be applied concurrently, iteratively, and recursively.
           </p>
         </div>
       </div>
@@ -66,7 +70,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 .editorial-atlas h1 {
   max-width: 24ch;
   margin-inline-start: -0.02em;
-  font-size: var(--font-size-section);
+  font-size: var(--font-size-heading);
   font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-heading);
   line-height: var(--line-height-tight);
@@ -74,7 +78,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 .editorial-atlas__body {
   display: grid;
-  max-width: 38ch;
+  max-width: 42ch;
   gap: var(--space-sm);
 }
 
@@ -107,7 +111,18 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   place-items: center;
 }
 
-@media (min-width: 64rem) {
+@media (min-width: 40rem) and (max-width: 71.999rem) {
+  .editorial-atlas__copy {
+    width: min(100%, 32rem);
+  }
+
+  .editorial-atlas__lifecycle {
+    width: min(100%, 36rem);
+    justify-self: center;
+  }
+}
+
+@media (min-width: 72rem) {
   .editorial-atlas {
     --atlas-block-padding: clamp(var(--space-lg), 4vh, var(--space-3xl));
     grid-template-columns: minmax(18rem, 5fr) minmax(30rem, 7fr);

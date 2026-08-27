@@ -1,0 +1,510 @@
+---
+import { lifecyclePhases } from "../data/lifecycle";
+import { type PhaseEntry, phasePath } from "../lib/phases";
+
+interface Props {
+  phase: PhaseEntry;
+}
+
+const { phase: phaseEntry } = Astro.props;
+const lifecycleIndex = lifecyclePhases.findIndex(
+  (candidate) => candidate.id === phaseEntry.data.phase,
+);
+
+if (lifecycleIndex < 0) {
+  throw new Error(`Lifecycle metadata is missing for phase: ${phaseEntry.data.phase}`);
+}
+
+const lifecycle = lifecyclePhases[lifecycleIndex];
+if (!lifecycle) {
+  throw new Error(`Lifecycle metadata is missing for phase index: ${lifecycleIndex}`);
+}
+
+const previous =
+  lifecyclePhases[(lifecycleIndex - 1 + lifecyclePhases.length) % lifecyclePhases.length];
+const next = lifecyclePhases[(lifecycleIndex + 1) % lifecyclePhases.length];
+
+if (!previous || !next) {
+  throw new Error(`Could not calculate adjacent phases for: ${lifecycle.id}`);
+}
+
+const phaseCounter = `${String(lifecycle.index).padStart(2, "0")} / ${String(
+  lifecyclePhases.length,
+).padStart(2, "0")}`;
+const phaseNumber = String(lifecycle.index).padStart(2, "0");
+---
+
+<article
+  class="phase-article"
+  style={`--phase-color: var(${lifecycle.colorVariable}); --phase-text: color-mix(in oklch, var(${lifecycle.colorVariable}) 30%, var(--ink))`}
+>
+  <nav class="phase-article__breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="/">Lifecycle</a></li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page">{lifecycle.name}</li>
+    </ol>
+  </nav>
+
+  <header class="phase-article__masthead" data-phase-number={phaseNumber}>
+    <p class="phase-article__meta">
+      <span class="phase-article__counter">{phaseCounter}</span>
+      <span class="phase-article__action">{lifecycle.action}</span>
+    </p>
+    <h1>{lifecycle.name}</h1>
+    <p class="phase-article__deck">{lifecycle.summary}</p>
+    <p class="phase-article__thesis">
+      This guide is an iterative map, not a one-way process. Teams revisit earlier work as they
+      learn.
+    </p>
+  </header>
+
+  <div class="phase-article__content">
+    <slot />
+  </div>
+
+  <section class="phase-article__sources" aria-labelledby="sources-title">
+    <header class="phase-article__section-heading">
+      <h2 id="sources-title">Sources</h2>
+    </header>
+
+    <ol>
+      {phaseEntry.data.sources.map((source) => (
+        <li>
+          <a href={source.url}>{source.label}</a>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <nav class="phase-article__phase-nav" aria-label="Phase navigation">
+    <a href={phasePath(previous.id)} class="phase-article__phase-link">
+      <span class="phase-article__phase-direction">Previous phase</span>
+      <span>← {previous.name}</span>
+    </a>
+    <a href={phasePath(next.id)} class="phase-article__phase-link phase-article__phase-link--next">
+      <span class="phase-article__phase-direction">Next phase</span>
+      <span>{next.name} →</span>
+    </a>
+  </nav>
+</article>
+
+<style>
+.phase-article {
+  --phase-prose: var(--article-measure);
+  width: min(100%, var(--container-wide));
+  min-width: 0;
+  margin-inline: auto;
+  padding: 0 max(var(--page-gutter), env(safe-area-inset-right))
+    max(var(--article-page-end), env(safe-area-inset-bottom))
+    max(var(--page-gutter), env(safe-area-inset-left));
+  container-name: phase-article;
+  container-type: inline-size;
+}
+
+.phase-article__breadcrumbs {
+  max-inline-size: var(--phase-prose);
+  margin-inline: auto;
+  padding-block-start: clamp(var(--space-sm), 2vw, var(--space-md));
+}
+
+.phase-article__breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-label);
+  list-style: none;
+}
+
+.phase-article__breadcrumbs a {
+  display: inline-flex;
+  min-block-size: var(--control-size);
+  align-items: center;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.phase-article__breadcrumbs li[aria-hidden] {
+  opacity: 0.5;
+}
+
+.phase-article__breadcrumbs li[aria-current] {
+  color: var(--phase-text);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-label);
+}
+
+.phase-article__masthead {
+  position: relative;
+  display: grid;
+  max-inline-size: var(--phase-prose);
+  margin-inline: auto;
+  padding-block: var(--article-cover-space);
+  isolation: isolate;
+}
+
+.phase-article__masthead::before {
+  position: absolute;
+  z-index: 0;
+  inset-block-start: 0;
+  inset-inline-end: -0.04em;
+  color: var(--phase-color);
+  content: attr(data-phase-number);
+  font-size: var(--font-size-ghost);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: 0.8;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.phase-article__masthead > * {
+  position: relative;
+  z-index: 1;
+}
+
+.phase-article__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
+  margin: 0 0 var(--space-sm);
+  color: var(--phase-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+}
+
+.phase-article__counter {
+  display: inline-flex;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.phase-article__action::before {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-inline-end: var(--space-xs);
+  border-radius: 50%;
+  background: var(--phase-color);
+  content: "";
+}
+
+.phase-article__masthead h1 {
+  max-width: 18ch;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+  text-wrap: balance;
+}
+
+.phase-article__deck {
+  max-width: 36ch;
+  margin: var(--space-sm) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-lead);
+}
+
+.phase-article__thesis {
+  max-width: 74ch;
+  margin: var(--article-subsection-space) 0 0;
+  color: var(--ink-soft);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
+.phase-article__thesis a {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+  text-decoration-color: var(--phase-color);
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+.phase-article__content {
+  display: grid;
+  max-inline-size: var(--phase-prose);
+  margin-inline: auto;
+  gap: 0;
+  font-size: var(--font-size-md);
+  counter-reset: phase-sections;
+}
+
+.phase-article__content :global(h2),
+.phase-article__content :global(h3),
+.phase-article__content :global(h4) {
+  scroll-margin-block-start: var(--space-xl);
+  color: var(--ink);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-heading);
+  line-height: var(--line-height-tight);
+}
+
+.phase-article__content :global(h2) {
+  display: grid;
+  margin: var(--article-section-space) 0 var(--space-md);
+  gap: var(--space-xs);
+  font-size: var(--font-size-section);
+  counter-increment: phase-sections;
+  text-wrap: balance;
+}
+
+.phase-article__content :global(h2::before) {
+  color: var(--phase-text);
+  content: counter(phase-sections, decimal-leading-zero);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--letter-spacing-label);
+}
+
+.phase-article__content :global(h2:first-child) {
+  margin-block-start: 0;
+}
+
+.phase-article__content :global(h3) {
+  margin: var(--article-subsection-space) 0 var(--space-sm);
+  color: var(--ink);
+  font-size: var(--font-size-xl);
+}
+
+.phase-article__content :global(h4) {
+  margin: var(--space-md) 0 var(--space-2xs);
+  font-size: var(--font-size-base);
+}
+
+.phase-article__content :global(p),
+.phase-article__content :global(li) {
+  max-width: none;
+  color: var(--ink);
+  font-size: inherit;
+  line-height: var(--line-height-reading);
+}
+
+.phase-article__content :global(p + p) {
+  margin-block-start: var(--article-paragraph-space);
+}
+
+.phase-article__content :global(ul),
+.phase-article__content :global(ol) {
+  display: grid;
+  gap: var(--article-list-space);
+  max-width: none;
+  margin: var(--article-paragraph-space) 0 0;
+  padding-inline-start: var(--space-lg);
+}
+
+.phase-article__content :global(li > ul),
+.phase-article__content :global(li > ol) {
+  margin-block-start: var(--space-2xs);
+}
+
+.phase-article__content :global(li::marker) {
+  color: var(--phase-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.phase-article__content :global(strong) {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+}
+
+.phase-article__content :global(a) {
+  color: var(--ink);
+  font-weight: var(--font-weight-semibold);
+  text-decoration-color: var(--phase-color);
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.16em;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.phase-article__content :global(blockquote) {
+  max-width: none;
+  margin: var(--space-lg) 0;
+  color: var(--ink-soft);
+}
+
+.phase-article__content :global(blockquote p) {
+  color: inherit;
+}
+
+.phase-article__content :global(code) {
+  padding: 0.08em 0.3em;
+  background: color-mix(in oklch, var(--surface) 84%, var(--phase-color));
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  font-variant-ligatures: none;
+}
+
+.phase-article__content :global(pre) {
+  max-width: 100%;
+  margin: var(--space-lg) 0;
+  padding: clamp(var(--space-md), 3vw, var(--space-lg));
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--surface) 92%, var(--phase-color));
+}
+
+.phase-article__content :global(pre code) {
+  display: block;
+  width: max-content;
+  min-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--font-size-code);
+  line-height: var(--line-height-code);
+}
+
+.phase-article__sources {
+  max-inline-size: var(--phase-prose);
+  margin-block-start: var(--article-section-space);
+  margin-inline: auto;
+  font-size: var(--font-size-md);
+}
+
+.phase-article__section-heading {
+  margin-block-end: var(--space-md);
+}
+
+.phase-article__section-heading h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-size-section);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-heading);
+  line-height: var(--line-height-tight);
+}
+
+.phase-article__sources ol {
+  display: grid;
+  gap: var(--article-list-space);
+  margin: 0;
+  padding-inline-start: var(--space-lg);
+}
+
+.phase-article__sources li {
+  padding-inline-start: var(--space-xs);
+}
+
+.phase-article__sources li::marker {
+  color: var(--phase-text);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.phase-article__sources a {
+  color: var(--ink);
+  font-size: inherit;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-reading);
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-decoration-color: var(--phase-color);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.phase-article__phase-nav {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  max-inline-size: var(--phase-prose);
+  margin-block-start: var(--article-section-space);
+  margin-inline: auto;
+}
+
+.phase-article__phase-link {
+  display: flex;
+  min-block-size: var(--control-size);
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2xs);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.phase-article__phase-link--next {
+  align-items: flex-end;
+  text-align: end;
+}
+
+.phase-article__phase-link > span:last-child {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-heading);
+  line-height: var(--line-height-tight);
+  text-decoration: underline;
+  text-decoration-color: var(--phase-color);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+.phase-article__phase-direction {
+  color: var(--phase-text);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+}
+
+@container phase-article (min-width: 64rem) {
+  .phase-article__masthead::before {
+    inset-block-start: var(--space-sm);
+  }
+
+  .phase-article__content :global(h2) {
+    display: flex;
+    position: relative;
+    align-items: baseline;
+    gap: var(--space-sm);
+  }
+
+  .phase-article__content :global(h2::before) {
+    position: absolute;
+    inset-inline-end: calc(100% + var(--space-lg));
+  }
+}
+
+@media (hover: hover) {
+  .phase-article__breadcrumbs a:hover {
+    color: var(--ink);
+  }
+
+  .phase-article__content :global(a:hover),
+  .phase-article__thesis a:hover,
+  .phase-article__sources a:hover,
+  .phase-article__phase-link:hover {
+    color: var(--phase-text);
+  }
+}
+
+@media (max-width: 30rem) {
+  .phase-article__phase-nav {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .phase-article__phase-link--next {
+    align-items: flex-start;
+    text-align: start;
+  }
+}
+</style>
