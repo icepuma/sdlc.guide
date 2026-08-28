@@ -1,6 +1,6 @@
 # ADR-[NNN]: [Short noun-phrase title]
 
-> Replace `[NNN]` with the next sequential ADR number. Never reuse a number, including for a rejected or superseded ADR.
+> Replace every `[placeholder]` before review. Replace `[NNN]` with the next sequential ADR number; never reuse a number, including for a rejected or superseded ADR.
 
 - **Status:** [Choose one: Proposed | Accepted | Rejected | Deprecated | Superseded]
 - **Date:** YYYY-MM-DD

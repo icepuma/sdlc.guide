@@ -2,7 +2,7 @@
 guide: prd
 slug: controlled-rollouts
 title: Controlled rollout evidence
-description: A practical decision record for comparative experiments and staged rollouts, with stable assignment, usable evidence, and clear pause authority.
+description: A practical guide to registering a decision plan for comparative experiments and staged rollouts, with stable assignment, usable evidence, and clear pause authority.
 order: 2
 sources:
   - label: Google SRE — Canarying Releases
@@ -13,15 +13,15 @@ sources:
     citationLabel: Microsoft safe-deployment guidance
     supports: Progressive exposure, health gates, bake time, stopping a rollout when issues are detected, and recovery.
     url: https://learn.microsoft.com/en-us/azure/well-architected/operational-excellence/safe-deployments
-  - label: FDA — Adaptive Design Clinical Trials for Drugs and Biologics Guidance for Industry (December 2019)
+  - label: FDA — Adaptive Designs for Clinical Trials of Drugs and Biologics Guidance for Industry (November 2019)
     citationLabel: FDA adaptive-design guidance
     supports: An analogy for deciding adaptation rules before evidence is observed; it is not a software rollout standard.
-    url: https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adaptive-design-clinical-trials-drugs-and-biologics-guidance-industry
+    url: https://www.fda.gov/media/78495/download
 ---
 
 ## Use this when production evidence changes the decision
 
-Use a controlled rollout when a product change needs real-use evidence before broad release. A credible causal design—often a concurrent comparison with stable assignment—can test whether the change caused a product outcome. A measured staged rollout can grow exposure while it tests operational safety. Without a suitable concurrent comparison or another credible causal design, a rollout can show operational safety but does not by itself establish that the change caused a product outcome.
+Use a controlled rollout when a product change needs real-use evidence before broad release. A credible causal design—often a randomised concurrent comparison with stable assignment—can test whether the change caused a product outcome. A measured staged rollout can grow exposure while it tests operational safety. Without a suitable concurrent comparison or another credible causal design, a rollout can show operational safety but does not by itself establish that the change caused a product outcome.
 
 Do not use this reference to make a decided release look measured. It does not replace accessibility, security, privacy, legal, or pre-release acceptance work. If a change can cause unacceptable harm, effective controls come first. Google describes a canary as a partial, time-limited deployment evaluated against a control. [Its guidance](https://sre.google/workbook/canarying-releases/) is a useful operational starting point.
 
@@ -31,9 +31,9 @@ The trigger is a decision that could change after observing production evidence:
 
 Before the first eligible person is exposed, publish a short decision plan. Name the change and release configuration, question, eligible population and exclusions, assignment unit, exposure cap, evaluation window, stages, primary outcome, guardrails, data-quality checks, review dates, and the action each result supports.
 
-Keep the plan proportionate. One primary outcome and a few decisive guardrails are better than a large dashboard. Define each measure's population, event, time window, denominator, source, and owner. State what makes evidence insufficient: missing assignment data, event delay, an unclosed outcome window, or failed reconciliation. Name the decision authority, pause authority, and evidence owner.
+Keep the plan proportionate. One primary outcome and a few decisive guardrails are better than a large dashboard. Define each measure’s population, event, time window, denominator, source, and owner. State what makes evidence insufficient: missing assignment data, event delay, an unclosed outcome window, or failed reconciliation. Name the decision authority, pause authority, and evidence owner.
 
-Set these rules before outcome evidence is visible. [FDA adaptive-design guidance](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/adaptive-design-clinical-trials-drugs-and-biologics-guidance-industry) is only an analogy: decide how evidence changes a decision before seeing it. It is **not** a software rollout standard. A later change needs a new plan version, a reason, and a statement that the original rule no longer applies.
+Set these rules before outcome evidence is visible. [FDA adaptive-design guidance](https://www.fda.gov/media/78495/download) is only an analogy: decide how evidence changes a decision before seeing it. It is **not** a software rollout standard. A later change needs a new plan version, a reason, and a statement that the original rule no longer applies.
 
 ## Keep assignment stable and interpretable
 

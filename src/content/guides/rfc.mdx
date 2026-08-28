@@ -10,7 +10,7 @@ facts:
   - label: Also called
     value: Internal design proposal
   - label: Written by
-    value: RFC record steward, with input from affected engineers and operators
+    value: RFC steward, with input from affected engineers and operators
   - label: Ideal length
     value: As short as the decision allows
   - label: Shelf life
@@ -78,7 +78,9 @@ overview:
     - term: Risks and mitigations
       description: Relevant security, privacy, reliability, performance, cost, or operational risks.
     - term: Rollout and operation
-      description: Migration, testing, enablement, observability, ownership, rollback, and clear go or pause gates.
+      description: Migration, testing, enablement, observability, ownership, rollback, Go, Hold, or Stop gates, and operational pause paths.
+    - term: Specialist records
+      description: Linked webhook, event-processing, payment, rollout, and other specialist evidence for each applicable concern.
     - term: Open questions
       description: Questions that must be answered or explicitly deferred before the RFC closes, each with an owner, date, and safety boundary.
     - term: Decision outcome
@@ -113,7 +115,7 @@ example:
 
 ## Summary
 
-Our 14 partner APIs are polled every 60 seconds; 98.6% are empty. This RFC proposes signed webhooks with one shared receipt and effect path.
+Our 14 partner APIs are polled every 60 seconds; 98.6% of polls are empty. This RFC proposes signed webhooks with one shared receipt and effect path.
 
 Decision: approve a one-partner, seven-day parallel pilot. It is evidence only: no polling reduction, cutover, or scale. dan@ must separately approve cutover after reconciliation; scale needs 30 days of outcomes.
 
@@ -175,7 +177,7 @@ Run one low-volume partner for seven days. Reconcile daily and at the end. The e
 
 lee@ collects evidence. The pilot passes only if the six tests pass; the eligible population has zero missing or duplicate required effects; at least 100 real events and 10 of each type are checked; one authorised delivery completes end to end; and p95 receipt-commit latency is below two seconds. It is first byte to committed receipt for valid first webhook deliveries. Missing evidence, a mismatch, an unknown effect, or a missed limit is a hold.
 
-If it passes, dan@ may record separate cutover authorisation with the polling change, rollback, evidence, and owner. A failed reconciliation or health check stops enables, restores or retains polling, and reconciles work.
+If it passes, dan@ may record separate cutover authorisation with the polling change, rollback, evidence, and owner. A failed reconciliation or health check stops enablement, restores or retains polling, and reconciles work.
 
 For 30 UTC days after cutover, count the same call classes. Scale needs a 90% reduction against the baseline, complete reconciliation, and zero missing or duplicate effects. Only then may dan@ enable the next partner.
 

@@ -62,14 +62,14 @@ Name only material work: dependencies, migration, support, communications, monit
 
 ## Specialist records
 
-For every applicable row, link the named specialist record before the decision. A `No` needs a short reason; do not use this table to replace specialist review. Add linked accessibility, privacy, security, and release records when those concerns apply.
+For every applicable row, link the named specialist record before the decision. `No` means the concern was assessed and does not apply here — give a short reason; `Not applicable` means the concern cannot arise for this product. Do not use this table to replace specialist review. Add linked accessibility, privacy, security, and release records when those concerns apply.
 
 | Concern | Applies? | Owner and required record |
 |---|---|---|
-| Payments or fraud controls | Yes · No · Not applicable | @name · [Payment recovery](/plan/prd/payment-recovery/) |
-| Controlled rollout or comparative decision | Yes · No · Not applicable | @name · [Controlled rollouts](/plan/prd/controlled-rollouts/) |
-| Signed external events or inbound webhooks | Yes · No · Not applicable | @name · [Signed webhooks](/design/rfc/signed-webhooks/) |
-| Retryable external effect or ordered event processing | Yes · No · Not applicable | @name · [Reliable event processing](/design/rfc/reliable-event-processing/) |
+| Payments or fraud controls | Yes · No · Not applicable | @name · [Payment recovery](https://sdlc.guide/plan/prd/payment-recovery/) |
+| Controlled rollout or comparative decision | Yes · No · Not applicable | @name · [Controlled rollouts](https://sdlc.guide/plan/prd/controlled-rollouts/) |
+| Signed external events or inbound webhooks | Yes · No · Not applicable | @name · [Signed webhooks](https://sdlc.guide/design/rfc/signed-webhooks/) |
+| Retryable external effect or ordered event processing | Yes · No · Not applicable | @name · [Reliable event processing](https://sdlc.guide/design/rfc/reliable-event-processing/) |
 
 ## Decision gate
 

@@ -2,7 +2,7 @@
 guide: prd
 slug: payment-recovery
 title: Payment recovery and decision binding
-description: A small, provider-aware contract for creating payments, resolving uncertain outcomes, and preventing stale fraud decisions from authorising fulfilment.
+description: A small, provider-neutral contract for creating payments, resolving uncertain outcomes, and preventing stale fraud decisions from authorising fulfilment.
 order: 1
 sources:
   - label: Stripe — Idempotent requests
@@ -58,7 +58,7 @@ Every fraud decision, manual review, and disposition binds to the exact payment 
 
 Before activating a new revision, atomically mark old open decisions and reviews as invalid for authorisation. Retain them as audit evidence. Late old-chain outcomes remain on the old revision, but cannot finalise the order or create fulfilment. Reconcile the old provider object, cancel or void it where possible, and use a completed refund or other approved compensation if it later succeeds. Do not call the purchase safely resolved until the old object is confirmed not to charge or that compensation is complete. The new revision needs a new assessment and decision ledger. This prevents an old approval from authorising a new card or amount.
 
-Do not let a fraud score alone fulfil an order. Finalisation requires the current revision's verified provider result and, where policy requires it, a current allow decision. Atomically claim finalisation so concurrent workers cannot complete twice. Fulfilment consumes that entitlement; it never infers payment success from an email, browser response, or unmatched event. Apply the relevant [OWASP ASVS 5.0.0 business-logic controls](https://github.com/OWASP/ASVS/blob/v5.0.0/5.0/en/0x11-V2-Validation-and-Business-Logic.md) to verify this contract.
+Do not let a fraud score alone fulfil an order. Finalisation requires the current revision’s verified provider result and, where policy requires it, a current allow decision. Atomically claim finalisation so concurrent workers cannot complete twice. Fulfilment consumes that entitlement; it never infers payment success from an email, browser response, or unmatched event. Apply the relevant [OWASP ASVS 5.0.0 business-logic controls](https://github.com/OWASP/ASVS/blob/v5.0.0/5.0/en/0x11-V2-Validation-and-Business-Logic.md) to verify this contract.
 
 ## Evidence for acceptance and operation
 

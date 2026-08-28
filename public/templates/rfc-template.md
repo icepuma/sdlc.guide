@@ -12,11 +12,13 @@
 | **Required reviewers** | @name (affected domain) |
 | **Review window** | YYYY-MM-DD to YYYY-MM-DD |
 | **Related work** | PRD, ADR, incident, prototype, plan, or issue links |
+| **Tracking** | Implementation tracker link when one exists, or `None` |
 | **Proposes to supersede** | `None`, or an RFC ID while this RFC is Draft or In review |
-| **Supersedes / superseded by** | `None` / `None`, or RFC ID after the coordinated accepted-record update |
+| **Supersedes** | `None`, or the predecessor RFC ID after the coordinated accepted-record update |
+| **Superseded by** | `None`, or the successor RFC ID after the coordinated accepted-record update |
 | **Last updated** | YYYY-MM-DD |
 
-`Proposes to supersede` is draft or review intent only. After an RFC successor is Accepted, clear it and update the successor's `Supersedes`, the predecessor's `Superseded by`, and the predecessor status together. Those normative links describe the accepted successor and its formerly accepted predecessor. A material change to a closed decision needs a later RFC, ADR, or maintained design record.
+`Proposes to supersede` is draft or review intent only. After an RFC successor is Accepted, clear it and update the successor’s `Supersedes`, the predecessor’s `Superseded by`, and the predecessor status together. Those normative links describe the accepted successor and its formerly accepted predecessor. A material change to a closed decision needs a later RFC, ADR, or maintained design record.
 
 ## Summary
 
@@ -78,14 +80,14 @@ Name the tests, review, measurement, or reconciliation that proves the design is
 
 ## Specialist records
 
-For every applicable row, link the named specialist record before acceptance. A `No` needs a short reason; this table does not replace specialist review.
+For every applicable row, link the named specialist record before acceptance. `No` means the concern was assessed and does not apply here — give a short reason; `Not applicable` means the concern cannot arise for this change. This table does not replace specialist review.
 
 | Concern | Applies? | Owner and required record |
 |---|---|---|
-| Signed external events or inbound webhooks | Yes · No · Not applicable | @name · [Signed webhooks](/design/rfc/signed-webhooks/) |
-| Retryable external effect or ordered event processing | Yes · No · Not applicable | @name · [Reliable event processing](/design/rfc/reliable-event-processing/) |
-| Payments or fraud controls | Yes · No · Not applicable | @name · [Payment recovery](/plan/prd/payment-recovery/) |
-| Controlled rollout or comparative decision | Yes · No · Not applicable | @name · [Controlled rollouts](/plan/prd/controlled-rollouts/) |
+| Signed external events or inbound webhooks | Yes · No · Not applicable | @name · [Signed webhooks](https://sdlc.guide/design/rfc/signed-webhooks/) |
+| Retryable external effect or ordered event processing | Yes · No · Not applicable | @name · [Reliable event processing](https://sdlc.guide/design/rfc/reliable-event-processing/) |
+| Payments or fraud controls | Yes · No · Not applicable | @name · [Payment recovery](https://sdlc.guide/plan/prd/payment-recovery/) |
+| Controlled rollout or comparative decision | Yes · No · Not applicable | @name · [Controlled rollouts](https://sdlc.guide/plan/prd/controlled-rollouts/) |
 
 Add linked privacy, accessibility, security, and release records when those concerns apply.
 

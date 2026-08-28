@@ -60,7 +60,7 @@ template:
 overview:
   paragraphs:
     - A product requirements document makes a proposed product change reviewable. This guide uses it to record the user problem and evidence, intended outcome, scope boundaries, expected behaviour, and measures.
-    - A named record steward keeps the PRD current and links research, designs, constraints, risks, dependencies, and delivery work. A named decision authority uses the gate to choose go, hold, stop, recovery, or a scope change. Use an RFC when a technical trade-off needs its own proposal.
+    - A named record steward keeps the PRD current and links research, designs, constraints, risks, dependencies, and delivery work. A named decision authority uses the gate to choose go, hold, stop, or recovery; a material scope change reopens the gate. Use an RFC when a technical trade-off needs its own proposal.
   takeaway: State the outcome, boundaries, evidence, and next decision. Link detailed technical and operational work instead of copying it.
   useWhen:
     - A product or feature needs shared intent across disciplines
@@ -72,18 +72,26 @@ overview:
     - A low-risk, reversible experiment fits in a short brief or backlog item
     - The document would only repeat information that is current and reviewable elsewhere
   anatomy:
+    - term: Decision summary
+      description: The proposed change, who it serves, the decision required, and what happens without action.
     - term: Problem and evidence
       description: Who is affected, what happens now, and the evidence behind the claim.
-    - term: Outcome and scope
-      description: The intended result, what is included, and what is deliberately excluded.
-    - term: Users and requirements
-      description: Stable user-need IDs, observable behaviour, and linked acceptance evidence.
-    - term: Measures and decision gate
-      description: The outcome, safety checks, owners, and the action each result supports.
-    - term: Risks and dependencies
-      description: Items that could affect the work, with an owner and gate consequence.
-    - term: Delivery plan and open questions
-      description: Checkpoints, proof, and decisions still needed before delivery.
+    - term: Outcomes and measures
+      description: The intended outcomes and the measures and guardrails that inform a decision.
+    - term: Scope and constraints
+      description: What is included, what is deliberately excluded, and the limits the work must respect.
+    - term: Users, needs, and evidence
+      description: Stable user-need IDs with the situation, need, and supporting evidence.
+    - term: Requirements and acceptance
+      description: Observable behaviour, release priority, and linked acceptance proof.
+    - term: Delivery and operations
+      description: Material dependencies, migration, support, monitoring, and recovery, each with an owner.
+    - term: Risks and open questions
+      description: Items that could change the work, with an owner, action, and due date.
+    - term: Specialist records
+      description: Linked payment, rollout, webhook, event-processing, and other specialist evidence for each applicable concern.
+    - term: Decision gate
+      description: The required evidence, the decision authority, and the recorded decision and action.
   dos:
     - Name a record steward and a separate decision authority
     - Write it with product, design, engineering, research, and affected partners
@@ -106,7 +114,7 @@ related:
 example:
   fileName: prd-guest-checkout.md
   documentTitle: "PRD: Guest checkout"
-  documentMeta: "Illustrative example · all names, dates, figures, and example URLs are fictional placeholders · status: In delivery · record steward: jonas@ · decision authority: @checkout-sponsor · target release: 2026-09-15"
+  documentMeta: "Illustrative example · fictional names, dates, figures, and URLs · status: In delivery · record steward: jonas@ · decision authority: @checkout-sponsor · target release: 2026-09-15"
 ---
 
 ## Decision summary
@@ -119,13 +127,13 @@ The current journey requires an account before purchase. In the 12 complete UTC 
 
 Eligible new visitors complete one purchase without an account, with no worse support, payment, fraud, privacy, accessibility, or service health.
 
-In scope: a guest choice, contact and delivery details, approved-provider payment, confirmation, authorised support lookup, measurement, and recovery. Guest checkout creates no account, credential, reusable profile, or marketing consent. Order data is used only as approved for fulfilment, support, reconciliation, and retention. Social sign-in, loyalty points, post-purchase account creation, and changes to the existing account journey are out of scope. Constraints: the approved privacy, accessibility, payment-provider, fraud, and support records must remain current.
+In scope: a guest choice, contact and delivery details, approved-provider payment, confirmation, authorised support lookup, measurement, and recovery. Guest checkout creates no account, credential, reusable profile, or marketing consent. Order data is used only as approved for fulfilment, support, reconciliation, and retention. Social sign-in, loyalty points, post-purchase account creation, and changes to the existing account journey are out of scope. Constraints: approved privacy, accessibility, payment-provider, fraud, and support records must remain current.
 
 ## Roles and needs
 
 - **Record steward:** jonas@ keeps the PRD and evidence current.
 - **Sponsor:** @checkout-sponsor authorises planned start, expansion, stop, and resumption.
-- **Emergency pause:** @release-manager may stop new guest assignment for an affected scope. Existing attempts complete or enter the approved recovery path; only the sponsor may resume or expand.
+- **Emergency pause:** @release-manager may stop new guest assignment or the guest offer for an affected scope. Existing attempts complete or enter approved recovery.
 
 | ID | User need | Evidence |
 | --- | --- | --- |
@@ -145,10 +153,10 @@ All six requirements are Must for this release.
 | R2 | UN-1 | The flow creates no account and uses only data approved in [PRIV-4.0](https://example.invalid/privacy/PRIV-4.0). Card data goes to the hosted provider; the service never stores PAN or CVV/CVC. [QA-102](https://example.invalid/acceptance/QA-102) |
 | R3 | UN-3 | All organisation-controlled guest pages and states meet [WCAG 2.2 AA](https://www.w3.org/TR/WCAG22/#conformance-reqs). The provider hand-off has approved accessibility evidence, tested hand-off, and documented recovery route. [QA-103](https://example.invalid/acceptance/QA-103) |
 | R4 | UN-4 | A retry, lost response, callback, or query creates no duplicate order or fulfilment and leaves no unresolved second charge. The server verifies the matching provider result before finalisation; browser return is not proof. Follow [payment recovery](/plan/prd/payment-recovery/). [QA-104](https://example.invalid/acceptance/QA-104) |
-| R5 | UN-5 | Support discloses one order only when the approved [exact-order verification record](https://example.invalid/support/SUP-19) establishes the requester’s entitlement. Failed, expired, replayed, cross-customer, or cross-tenant checks disclose nothing. [QA-105](https://example.invalid/acceptance/QA-105) |
+| R5 | UN-5 | Support discloses one order only when the approved [identity-verification procedure (IVP)](https://example.invalid/support/SUP-19) establishes the requester’s entitlement. Failed, expired, replayed, cross-customer, or cross-tenant checks disclose nothing. [QA-105](https://example.invalid/acceptance/QA-105) |
 | R6 | UN-1 | Each enrolled attempt records its assigned experience, outcome, safety signals, and data-quality evidence. Use a concurrent control that meets `STAT-1.0` causal-design conditions; history plans but does not establish causation. Follow [controlled rollout evidence](/plan/prd/controlled-rollouts/). [QA-106](https://example.invalid/acceptance/QA-106) |
 
-## Measures and release gate
+## Measures and decision gate
 
 | Measure | Registered decision use |
 | --- | --- |
@@ -157,12 +165,15 @@ All six requirements are Must for this release.
 | Payment and fraud safety | Track duplicate charge or order, unresolved provider result, fraud-control bypass, and registered harm limits. |
 | Existing-path, service, and data quality | Track returning-account completion, support, accessibility, errors, latency, assignment coverage, and reconciliation. |
 
-[STAT-1.0](https://example.invalid/analysis/STAT-1.0) fixes population, assignment, windows, thresholds, data-quality checks, and action before 2% starts. It pre-registers outcome review for 14 days after final scheduled 25% enrolment, after the seven-day outcome window and reconciliation.
+[STAT-1.0](https://example.invalid/analysis/STAT-1.0) fixes population, assignment, windows, thresholds, data-quality checks, and action before 2% starts. It pre-registers outcome review 14 days after final scheduled 25% enrolment, after the seven-day outcome window and reconciliation.
 
-At every start, expansion, or resumption, the sponsor acts only if the applicable QA-101–QA-106 checks, specialist approvals, monitoring, recovery exercise, and every pre-registered `STAT-1.0` condition pass; there is no unresolved critical harm, recovery, or data-quality issue. Otherwise, hold or stop. The release manager pauses new assignment immediately for a safety breach, failed approval, duplicate charge or order, unauthorised disclosure, fraud-control bypass, or material service regression. The sponsor resumes only with fresh recovery evidence.
+| Required evidence | Decision authority | Decision and action |
+| --- | --- | --- |
+| Start, expansion, or resumption: QA-101–QA-106 checks, specialist approvals, monitoring, recovery exercise, and pre-registered `STAT-1.0` conditions pass with no unresolved critical harm, recovery, or data-quality issue. | @checkout-sponsor | Go; otherwise Hold or Stop. |
+| Safety breach, failed approval, duplicate charge or order, unauthorised disclosure, fraud-control bypass, or material service regression. | @checkout-sponsor | Recover — @release-manager pauses new assignment immediately; the sponsor resumes with fresh recovery evidence. |
 
-## Risks and open question
+## Risks and open questions
 
 - **Payment uncertainty:** Payments reconciles unknown results; unresolved results hold the rollout.
 - **Fraud or wrongful block:** Risk owns the policy, review path, and registered harm limit; a breach pauses new assignment.
-- **OQ-1:** Support and security must approve and test the exact-order verification procedure by 2026-09-01. It blocks 2%.
+- **OQ-1:** Support and security must approve and test the identity-verification procedure (IVP) by 2026-09-01. It blocks 2%.

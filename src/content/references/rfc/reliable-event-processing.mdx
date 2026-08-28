@@ -31,7 +31,7 @@ sources:
 
 Use this reference when an incoming event changes local state or can cause an external effect: a payment request, email, provisioning call, notification, or downstream command. Its aim is not a magical “exactly once” label. It is a design that makes duplicate delivery, late work, and uncertain network outcomes safe enough to explain, test, and operate.
 
-Start by naming the trigger. State which authenticated producer, event type, schema version, and business condition allow work to begin. Reject input before receipt when its identity, signature, schema, size, or freshness cannot be verified. A successful acknowledgement should mean only that the event is durably accepted into the local workflow. It must not imply that every later effect has completed.
+Start by naming the trigger. State which authenticated producer, event type, schema version, and business condition allow work to begin. Reject input before receipt when its identity, signature, size, freshness, or transport syntax cannot be verified. When identity and authentication are valid but an event type is unsupported or a syntactically parseable payload fails its supported schema, atomically receipt and quarantine it with an immutable reason, owner, protected recovery material, and durable alert or review outbox. Acknowledge only after that commit. Approved reprocessing must use the normal receipt and effect-deduplication boundary. A successful acknowledgement means only that the event is durably accepted; it does not imply that later effects completed.
 
 ## Make receipt and publication one local decision
 

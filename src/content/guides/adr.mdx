@@ -69,7 +69,7 @@ overview:
     - term: Number and title
       description: A sequential, never-reused ID and a short title that names the decision.
     - term: Status, relationships, and roles
-      description: Choose one status. Include the date, ADR steward, decision authority, and links only after the named successor is accepted.
+      description: Choose one status. Include the date, ADR steward, and decision authority; add supersession links only after the named successor is accepted.
     - term: Context
       description: Factual technical, product, project, and social forces that make a decision necessary.
     - term: Options considered
@@ -126,7 +126,7 @@ The design has three non-negotiable boundaries:
 - Every external operation has a durable logical-effect key and immutable payload fingerprint. A timeout or late worker is `unknown` until reconciliation; it never creates a fresh effect by guesswork.
 - Order-sensitive effects are allowed only when the recipient enforces a monotonic fence or a durable no-effect tombstone. Local leases coordinate workers but cannot prove that a late network call did not happen.
 
-The implementation record defines `SKIP LOCKED`, leases, retry limits, idempotent effects, recipient ordering, recovery, and monitoring. Follow the [reliable event processing reference](/design/rfc/reliable-event-processing/) for those details.
+The implementation record defines `SKIP LOCKED` claiming, lease expiry measured with the database clock (`clock_timestamp()`, not transaction-fixed `now()`), retry limits, idempotent effects, recipient ordering, recovery, and monitoring. Follow the [reliable event processing reference](/design/rfc/reliable-event-processing/) for those details.
 
 ## Consequences
 
@@ -144,12 +144,14 @@ This decision favours current operational simplicity over potential future throu
 - The team must maintain and support the worker library.
 - The queue is at-least-once, so handlers need durable effect records and idempotent downstream contracts.
 
-## Validation and review
+## Confirmation or review trigger
 
 Before production use, test atomic enqueueing, concurrent claims, crash recovery, duplicate delivery, unknown downstream results, and the late-worker ordering boundary. The implementation must show one intended effect or a reconciled unknown outcome; it must not silently retry ambiguity.
 
-If any trigger persists for seven days, or causes material impact sooner, propose a successor ADR. Keep this accepted decision text and reasoning unchanged. After an accepted successor replaces it, set this predecessor’s `Status: Superseded` and `Superseded by: ADR-XXX`; in the same coordinated update, set the successor’s `Supersedes: ADR-007`.
+Review triggers:
 
 - Sustained volume reaches 500 jobs per minute; reassess queue latency and database impact.
 - Queue table bloat, lock contention, or job latency degrades normal database work.
 - The workload needs more throughput or isolation than the current PostgreSQL design can provide without degrading normal database work.
+
+If any trigger persists for seven days, or causes material impact sooner, propose a successor ADR. Keep this accepted decision text and reasoning unchanged. After an accepted successor replaces it, set this predecessor’s `Status: Superseded` and `Superseded by: ADR-XXX`; in the same coordinated update, set the successor’s `Supersedes: ADR-007`.
